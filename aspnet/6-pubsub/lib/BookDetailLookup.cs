@@ -18,8 +18,10 @@ using GoogleCloudSamples.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -223,14 +225,46 @@ namespace GoogleCloudSamples
             var response = WebRequest.Create(query).GetResponse();
             var reader = new StreamReader(response.GetResponseStream());
             var json = reader.ReadToEnd();
-            dynamic results = JObject.Parse(json);
-            dynamic info = results.items[0].volumeInfo;
-            book.Title = info.title;
-            book.PublishedDate = info.publishedDate;
-            book.Author = string.Join(", ", info.authors);
-            book.Description = info.description;
+            ParseBook(json, ref book);
             // TODO: update image.
             bookStore.Update(book);
+        }
+
+        public static DateTime? ParseDate(string dateString)
+        {
+            DateTime result;
+            if (DateTime.TryParse(dateString, out result))
+                return result;
+            int year;
+            if (int.TryParse(dateString, out year))
+                return new DateTime(year, 1, 1);
+            return null;
+        }
+
+        public static void ParseBook(string json, ref Book book)
+        {
+            JObject results = JObject.Parse(json);
+            var infos = results["items"].Select(token => (JObject)token)
+                .Where(obj => obj.Property("volumeInfo") != null)
+                .Select(obj => obj["volumeInfo"]);
+            Func<string, IEnumerable<JToken>> GetInfo = (propertyName) =>
+            {
+                return infos.Select(token => (JObject)token)
+                    .Where(info => info.Property(propertyName) != null)
+                    .Select(info => info[propertyName]);
+            };
+            foreach (var title in GetInfo("title").Take(1))
+                book.Title = title.ToString();
+            var publishedDates = GetInfo("publishedDate")
+                .Select(value => ParseDate(value.ToString()))
+                .Where(date => date != null)
+                .OrderBy(date => date);
+            foreach (var date in publishedDates.Take(1))
+                book.PublishedDate = date;
+            foreach (var authors in GetInfo("authors").Take(1))
+                book.Author = string.Join(", ", authors.Select(author => author.ToString()));
+            foreach (var description in GetInfo("description").Take(1))
+                book.Description = description.ToString();
         }
         // [END processbook]
     }

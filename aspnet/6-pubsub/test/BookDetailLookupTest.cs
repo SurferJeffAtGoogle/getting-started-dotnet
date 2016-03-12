@@ -121,5 +121,13 @@ namespace GoogleCloudSamples
             cancel.CancelAfter(100);
             pullTask.Wait();
         }
+
+        [Fact]
+        public void TestParseBook()
+        {
+            var json = System.IO.File.ReadAllText(@"testdata\RedFern.json");
+            Book book = new Book();
+            BookDetailLookup.ParseBook(json, ref book);
+        }
     }
 }
