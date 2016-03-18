@@ -15,6 +15,7 @@
 using Google.Apis.Storage.v1;
 using Google.Apis.Storage.v1.ClientWrapper;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -39,6 +40,7 @@ namespace GoogleCloudSamples.Services
         {
             var imageAcl = ObjectsResource
                 .InsertMediaUpload.PredefinedAclEnum.PublicRead;
+            Debug.WriteLine($"BaseUri: {_storageClient.Service.BaseUri}");
 
             var imageObject = await _storageClient.UploadObjectAsync(
                 bucket: _bucketName,
