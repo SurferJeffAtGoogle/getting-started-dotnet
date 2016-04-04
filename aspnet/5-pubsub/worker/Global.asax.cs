@@ -17,6 +17,8 @@ using Microsoft.Practices.Unity;
 using System.Threading;
 using System.Web.Http;
 using System.Web.Mvc;
+using System.Web.Optimization;
+using System.Web.Routing;
 
 namespace GoogleCloudSamples
 {
@@ -25,7 +27,9 @@ namespace GoogleCloudSamples
         protected void Application_Start()
         {
             AreaRegistration.RegisterAllAreas();
-            GlobalConfiguration.Configure(WebApiConfig.Register);
+            FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
+            RouteConfig.RegisterRoutes(RouteTable.Routes);
+            BundleConfig.RegisterBundles(BundleTable.Bundles);
 
             // Launch a thread that watches the book detail subscription.
             var container = App_Start.UnityConfig.GetConfiguredContainer();
