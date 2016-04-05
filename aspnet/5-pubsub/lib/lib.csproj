@@ -189,7 +189,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\UnityConfig.cs" />
-    <Compile Include="BookDetailLookup.cs" />
+    <Compile Include="Services\BookDetailLookup.cs" />
     <Compile Include="Migrations\201603222229199_Init.cs" />
     <Compile Include="Migrations\201603222229199_Init.Designer.cs">
       <DependentUpon>201603222229199_Init.cs</DependentUpon>
@@ -203,6 +203,7 @@
     <Compile Include="Models\DbBookStore.cs" />
     <Compile Include="Models\IBookStore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\ISimpleLogger.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

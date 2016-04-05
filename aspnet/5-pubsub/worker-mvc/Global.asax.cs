@@ -1,5 +1,6 @@
 ﻿using GoogleCloudSamples;
 using GoogleCloudSamples.Models;
+using GoogleCloudSamples.Services;
 using Microsoft.Practices.Unity;
 using System;
 using System.Collections.Generic;
@@ -24,7 +25,8 @@ namespace worker_mvc
             // Launch a thread that watches the book detail subscription.
             var container = App_Start.UnityConfig.GetConfiguredContainer();
             LibUnityConfig.RegisterTypes(container);
-            var bookDetailLookup = new BookDetailLookup(LibUnityConfig.ProjectId);
+            var bookDetailLookup = new BookDetailLookup(LibUnityConfig.ProjectId,
+                logger: LogTicker.Instance);
             bookDetailLookup.CreateTopicAndSubscription();
             var pullTask = bookDetailLookup.StartPullLoop(container.Resolve<IBookStore>(),
                 new CancellationTokenSource().Token);

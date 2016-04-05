@@ -13,6 +13,7 @@
 // the License.
 
 using GoogleCloudSamples.Models;
+using GoogleCloudSamples.Services;
 using Microsoft.Practices.Unity;
 using System.Threading;
 using System.Web.Http;

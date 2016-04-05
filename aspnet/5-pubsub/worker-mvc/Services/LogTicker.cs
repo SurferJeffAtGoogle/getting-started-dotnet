@@ -5,10 +5,11 @@ using System.Threading;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNet.SignalR.Hubs;
 using worker_mvc.Hubs;
+using GoogleCloudSamples.Services;
 
 namespace worker_mvc
 {
-    public class LogTicker
+    public class LogTicker : ISimpleLogger
     {
         // Singleton instance
         private readonly static Lazy<LogTicker> _instance = new Lazy<LogTicker>(() => new LogTicker(GlobalHost.ConnectionManager.GetHubContext<LogHub>().Clients));
