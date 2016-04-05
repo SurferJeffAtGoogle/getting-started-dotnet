@@ -1,9 +1,9 @@
 ﻿using Microsoft.Owin;
 using Owin;
 
-[assembly: OwinStartupAttribute(typeof(worker_mvc.Startup))]
+[assembly: OwinStartupAttribute(typeof(GoogleCloudSamples.Startup))]
 
-namespace worker_mvc
+namespace GoogleCloudSamples
 {
     public class Startup
     {

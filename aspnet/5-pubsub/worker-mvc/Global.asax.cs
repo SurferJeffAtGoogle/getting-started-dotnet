@@ -11,7 +11,7 @@ using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
 
-namespace worker_mvc
+namespace GoogleCloudSamples
 {
     public class MvcApplication : System.Web.HttpApplication
     {

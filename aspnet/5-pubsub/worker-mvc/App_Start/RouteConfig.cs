@@ -5,7 +5,7 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 
-namespace worker_mvc
+namespace GoogleCloudSamples
 {
     public class RouteConfig
     {

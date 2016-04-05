@@ -4,7 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 
-namespace worker_mvc.Controllers
+namespace GoogleCloudSamples.Controllers
 {
     public class HomeController : Controller
     {

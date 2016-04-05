@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Optimization;
 
-namespace worker_mvc
+namespace GoogleCloudSamples
 {
     public class BundleConfig
     {

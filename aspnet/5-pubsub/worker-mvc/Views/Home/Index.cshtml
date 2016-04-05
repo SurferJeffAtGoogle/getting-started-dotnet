@@ -17,6 +17,11 @@
         $(function () {
             // Reference the auto-generated proxy for the hub.
             var log = $.connection.logHub;
+            var lastMessage = log.server.getLastMessage();
+            if (lastMessage) {
+                // Add the message to the page.
+                $('#discussion').append('<p>' + htmlEncode(lastMessage) + '</p>');
+            }
             // Create a function that the hub can call back to display messages.
             log.client.logVerbose = function (message) {
                 // Add the message to the page.

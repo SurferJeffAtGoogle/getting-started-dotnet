@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Mvc;
 
-namespace worker_mvc
+namespace GoogleCloudSamples
 {
     public class FilterConfig
     {

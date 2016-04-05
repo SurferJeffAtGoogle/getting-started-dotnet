@@ -1,18 +1,18 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading;
 using Microsoft.AspNet.SignalR;
 using Microsoft.AspNet.SignalR.Hubs;
-using worker_mvc.Hubs;
+using GoogleCloudSamples.Hubs;
 using GoogleCloudSamples.Services;
 
-namespace worker_mvc
+namespace GoogleCloudSamples
 {
     public class LogTicker : ISimpleLogger
     {
         // Singleton instance
         private readonly static Lazy<LogTicker> _instance = new Lazy<LogTicker>(() => new LogTicker(GlobalHost.ConnectionManager.GetHubContext<LogHub>().Clients));
+
+        private object _lastMessageLock = new Object();
+        private string _lastMessage;
 
         private LogTicker(IHubConnectionContext<dynamic> clients)
         {
@@ -33,11 +33,20 @@ namespace worker_mvc
             set;
         }
 
-        public void LogVerbose(string message) => Clients.All.logVerbose(message);
+        public void LogVerbose(string message)
+        {
+            lock (_lastMessageLock) _lastMessage = message;
+            Clients.All.logVerbose(message);
+        }
 
         public void LogError(string message, Exception e)
         {
             Clients.All.logError(message, e.ToString());
+        }
+
+        public string GetLastMessage()
+        {
+            lock (_lastMessageLock) return _lastMessage;
         }
     }
 }
