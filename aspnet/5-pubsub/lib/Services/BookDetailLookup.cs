@@ -221,9 +221,10 @@ namespace GoogleCloudSamples.Services
         /// <param name="bookId">The id of the book to look up.</param>
         /// <returns></returns>
         // [START processbook]
-        public static void ProcessBook(IBookStore bookStore, long bookId)
+        public void ProcessBook(IBookStore bookStore, long bookId)
         {
             var book = bookStore.Read(bookId);
+            _logger.LogVerbose($"Found {book.Title}.  Updating.");
             var query = "https://www.googleapis.com/books/v1/volumes?q="
                 + Uri.EscapeDataString(book.Title);
             var response = WebRequest.Create(query).GetResponse();
