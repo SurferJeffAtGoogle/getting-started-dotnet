@@ -79,7 +79,7 @@ namespace GoogleCloudSamples
                 "GoogleCloudSamples:ProjectId to your google project id.");
         }
 
-        BookDetailLookup NewBookDetailLookup()
+        private BookDetailLookup NewBookDetailLookup()
         {
             var options = new BookDetailLookup.Options();
             options.SubscriptionName += "-test";
