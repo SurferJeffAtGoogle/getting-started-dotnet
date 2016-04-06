@@ -20,13 +20,19 @@ using System;
 
 namespace GoogleCloudSamples
 {
+    /// <summary>
+    /// A singleton that sends log messages to listening clients.
+    /// </summary>
     public class LogTicker : ISimpleLogger
     {
         // Singleton instance
         private readonly static Lazy<LogTicker> s_instance = new Lazy<LogTicker>(() => new LogTicker(GlobalHost.ConnectionManager.GetHubContext<LogHub>().Clients));
 
-        private object _lastMessageLock = new Object();
+        /// <summary>
+        /// The message most recent message passed to LogVerbose().
+        /// </summary>
         private string _lastMessage;
+        private object _lastMessageLock = new Object();
 
         private LogTicker(IHubConnectionContext<dynamic> clients)
         {
@@ -58,6 +64,10 @@ namespace GoogleCloudSamples
             Clients.All.logError(message, e.ToString());
         }
 
+        /// <summary>
+        /// Get the most recent message written to the log.
+        /// </summary>
+        /// <returns>The most recent message written to the log.</returns>
         public string GetLastMessage()
         {
             lock (_lastMessageLock) return _lastMessage;

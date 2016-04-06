@@ -17,10 +17,14 @@ using Microsoft.AspNet.SignalR;
 namespace GoogleCloudSamples.Hubs
 {
     /// <summary>
-    /// A Hub that wraps LogTicker.
+    /// A SignalR Hub that wraps LogTicker.
     /// </summary>
     public class LogHub : Hub
     {
+        /// <summary>
+        /// Get the most recent message written to the log.
+        /// </summary>
+        /// <returns>The most recent message written to the log.</returns>
         public string GetLastMessage()
         {
             return LogTicker.Instance.GetLastMessage();

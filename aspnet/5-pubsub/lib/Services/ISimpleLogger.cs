@@ -16,9 +16,12 @@ using System;
 
 namespace GoogleCloudSamples.Services
 {
+    /// <summary>
+    /// Using a sophisticated logger like log4net is beyond the scope of this sample.
+    /// So, we use a simple logging interface.
+    /// </summary>
     public interface ISimpleLogger
     {
-        // Using a sophisticated logger like log4net is beyond the scope of this sample.
         void LogVerbose(string message);
 
         void LogError(string message, Exception e);
