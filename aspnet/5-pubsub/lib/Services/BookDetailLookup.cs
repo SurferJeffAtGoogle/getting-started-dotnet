@@ -40,7 +40,6 @@ namespace GoogleCloudSamples.Services
         private readonly string _subscriptionPath;
         private readonly ISimpleLogger _logger;
 
-
         /// <summary>
         /// We json-encode this message and publish it to the topic.
         /// </summary>
@@ -49,6 +48,7 @@ namespace GoogleCloudSamples.Services
         {
             public long BookId;
         };
+
         // [END queuemessage]
 
         public class Options
@@ -120,6 +120,7 @@ namespace GoogleCloudSamples.Services
                     throw;
             }
         }
+
         // [END createtopicandsubscription]
 
         public Task StartPullLoop(IBookStore bookStore, CancellationToken cancellationToken)
@@ -196,6 +197,7 @@ namespace GoogleCloudSamples.Services
             _pubsub.Projects.Subscriptions.Acknowledge(new AcknowledgeRequest() { AckIds = ackIds },
                 _subscriptionPath).Execute();
         }
+
         // [END pullonce]
 
         /// <summary>
@@ -213,6 +215,7 @@ namespace GoogleCloudSamples.Services
                 Messages = new[] { new PubsubMessage() { Data = base64 } },
             }, _topicPath).Execute();
         }
+
         // [END enqueuebook]
 
         /// <summary>
@@ -234,10 +237,11 @@ namespace GoogleCloudSamples.Services
             UpdateBookFromJson(json, book);
             bookStore.Update(book);
         }
+
         // [END processbook]
 
         /// <summary>
-        /// Parse a date time.  Return null if it can't be parsed.  A single number will be 
+        /// Parse a date time.  Return null if it can't be parsed.  A single number will be
         /// interpreted as a year, and the date returned will be YEAR-01-01.
         /// </summary>
         /// <param name="dateString">A string representation of the date.</param>
