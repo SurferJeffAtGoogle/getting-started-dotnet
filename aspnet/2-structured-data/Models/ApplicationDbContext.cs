@@ -24,15 +24,6 @@ namespace GoogleCloudSamples.Models
         // [END dbset]
 
         /// <summary>
-        /// Needed to instantiate ApplicationDbContext with a connection string
-        /// pulled from an environment variable.
-        /// </summary>
-        /// <param name="connection"></param>
-        internal ApplicationDbContext(DbConnection connection) : base(connection, true)
-        {
-        }
-
-        /// <summary>
         /// Pulls connection string from Web.config.
         /// </summary>
         internal ApplicationDbContext() : base("name=LocalMySqlServer")

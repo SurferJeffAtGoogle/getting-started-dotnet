@@ -68,8 +68,7 @@ namespace GoogleCloudSamples
         /// </summary>
         public static string GetConfigVariable(string key)
         {
-            string value = Environment.GetEnvironmentVariable(key) ??
-                ConfigurationManager.AppSettings[key];
+            string value = ConfigurationManager.AppSettings[key];
             if (value == null)
                 throw new ConfigurationException($"You must set the configuration variable {key}.");
             return value;
