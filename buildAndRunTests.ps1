@@ -84,6 +84,27 @@ function RunTestScripts
     }
 }
 
+function AddSetting($config, [string]$key, [string]$value) {
+    $x = Select-Xml -Xml $config.Node -XPath "appSettings/add[@key='$key']"
+    if ($x) {
+        $x.Node.value = $value
+    }
+}
+
+function UpdateWebConfig([string]$bookstore) {        
+    $config = Select-Xml -Path .\Web.config -XPath configuration
+    AddSetting $config 'GoogleCloudSamples:BookStore' $bookstore
+    AddSetting $config 'GoogleCloudSamples:ProjectId' $env:GoogleCloudSamples:ProjectId
+    AddSetting $config 'GoogleCloudSamples:BucketName' $env:GoogleCloudSamples:BucketName
+    AddSetting $config 'GoogleCloudSamples:AuthClientId' $env:GoogleCloudSamples:AuthClientId
+    AddSetting $config 'GoogleCloudSamples:AuthClientSecret' $env:GoogleCloudSamples:AuthClientSecret
+    $connectionString = Select-Xml -Xml $config.Node -XPath "connectionStrings/add[@name='LocalMySqlServer']"
+    if ($env:Data:MySql:ConnectionString -and $connectionString) {
+        $connectionString.Node.connectionString = $env:Data:MySql:ConnectionString;        
+    }
+    $config.Node.OwnerDocument.Save($config.Path);
+}
+
 ##############################################################################
 # core tests.
 
