@@ -14,22 +14,17 @@
 
 param([switch]$lint)
 
-Import-Module .\BuildTools.psm1
+function GetRootDirectory
+{
+    $Invocation = (Get-Variable MyInvocation -Scope 1).Value
+    Split-Path $Invocation.MyCommand.Path
+}
 
-# Leave the user in the same directory as they started.
-$originalDir = Get-Location
-Try
-{
-    # First, lint everything.  If the lint fails, don't waste time running
-    # tests.
-    if ($lint) {
-        Lint-Code
-    }
-    # Use Where-Object to avoid infinitely recursing, because this script
-    # matches the mask.
-    GetFiles -Masks '*runtests*.ps1' | Where-Object FullName -ne $PSCommandPath | Run-TestScripts
+Import-Module (Join-Path (GetRootDirectory) BuildTools.psm1) -DisableNameChecking
+
+# First, lint everything.  If the lint fails, don't waste time running
+# tests.
+if ($lint) {
+    Lint-Code
 }
-Finally
-{
-    Set-Location $originalDir
-}
+Run-Tests

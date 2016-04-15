@@ -205,19 +205,22 @@ function UpFind-File([string[]]$Masks = '*')
 # Powershell scripts.
 #
 #.EXAMPLE
-# Find-Files -Masks *tests.ps1 | Run-TestScripts
+# Run-Tests
 ##############################################################################
-function Run-TestScripts 
+function Run-Tests 
 {
-    $rootDir = (pwd).Path
+    $scripts = if ($input.Length) {$input} else {
+        GetFiles -Masks '*runtests*.ps1' | Where-Object FullName -ne $PSCommandPath
+    }
+    $rootDir = pwd
     # Keep running lists of successes and failures.
     # Array of strings: the relative path of the inner script.
     $successes = @()
     $failures = @()
-    foreach ($script in $input) {
-        Set-Location $script.Directory
-        $relativePath = $script.FullName.Substring($rootDir.Length + 1, $script.FullName.Length - $rootDir.Length - 1)
+    foreach ($script in $scripts) {
+        $relativePath = Resolve-Path -Relative $script
         echo $relativePath
+        Set-Location $script.Directory
         # A script can fail two ways.
         # 1. Throw an exception.
         # 2. The last command it executed failed. 
@@ -232,6 +235,9 @@ function Run-TestScripts
         Catch {
             echo  $_.Exception.Message
             $failures += $relativePath
+        }
+        Finally {
+            Set-Location $rootDir
         }
     }
     # Print a final summary.
