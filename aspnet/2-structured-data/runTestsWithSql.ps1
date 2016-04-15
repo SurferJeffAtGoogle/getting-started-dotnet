@@ -11,8 +11,10 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-BuildSolution
-$env:GoogleCloudSamples:BookStore = "mysql"
+Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
+
+Update-Config mysql
+Build-Solution
 # Update the database before running the test.
 cp packages\EntityFramework.*\tools\migrate.exe bin\.
 cd bin
@@ -21,5 +23,4 @@ if ($LASTEXITCODE) {
     throw "migrate.exe failed with error code $LASTEXITCODE"
 }
 cd ..
-RunIISExpressTest
-$failed
+Run-IISExpressTest
