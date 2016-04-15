@@ -218,7 +218,7 @@ function Run-Tests
     $successes = @()
     $failures = @()
     foreach ($script in $scripts) {
-        $relativePath = Resolve-Path -Relative $script
+        $relativePath = Resolve-Path -Relative $script.FullName
         echo $relativePath
         Set-Location $script.Directory
         # A script can fail two ways.
@@ -332,12 +332,12 @@ function Lint-Code {
 # Invokes nuget first, then msbuild.  Throws an exception if nuget or the
 # build fails.
 ##############################################################################
-function Build-Solution {
-    nuget restore
+function Build-Solution($solution=$null) {
+    nuget restore $solution
     if ($LASTEXITCODE) {
         throw "Nuget failed with error code $LASTEXITCODE"
     }
-    msbuild /p:Configuration=Debug
+    msbuild /p:Configuration=Debug $solution
     if ($LASTEXITCODE) {
         throw "Msbuild failed with error code $LASTEXITCODE"
     }
@@ -439,7 +439,7 @@ function Migrate-Database($DllName = '') {
     if (!$DllName) {
         $DllName =  (get-item .).Name + ".dll"
     }
-    cp packages\EntityFramework.*\tools\migrate.exe bin\.
+    cp (Join-Path (UpFind-File packages).FullName EntityFramework.*\tools\migrate.exe) bin\.
     $originalDir = pwd
     Try {
         cd bin
