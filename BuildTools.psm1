@@ -311,6 +311,10 @@ function Get-PortNumber($SiteName, $ApplicationhostConfig) {
 # The process object
 ##############################################################################
 function Run-IISExpress($SiteName,  $ApplicationhostConfig) {
+    # Applicationhost.config expects the environment variable
+    # GETTING_STARTED_DOTNET to point to the same directory containing
+    # applicationhost.config.
+    $env:GETTING_STARTED_DOTNET = (Get-Item $ApplicationhostConfig).DirectoryName
     $argList = ('/config:"' + $ApplicationhostConfig + '"'), "/site:$SiteName", "/apppool:Clr4IntegratedAppPool"
     Start-Process iisexpress.exe  -ArgumentList $argList -PassThru
 }
