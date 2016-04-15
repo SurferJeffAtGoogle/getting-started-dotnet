@@ -38,6 +38,15 @@ function Add-Setting($Config, [string]$Key, [string]$Value) {
 
 ##############################################################################
 #.SYNOPSIS
+# Finds all the Web.config files in subdirectories.
+#
+##############################################################################
+function Get-Config {
+    Find-Files -Masks Web.config -AntiMasks 'bin', 'packages' | Resolve-Path -Relative
+}
+
+##############################################################################
+#.SYNOPSIS
 # Updates Web.config files, pulling values from environment variables.
 #
 #.DESCRIPTION
@@ -55,7 +64,7 @@ function Add-Setting($Config, [string]$Key, [string]$Value) {
 # Update-Config mysql
 ##############################################################################
 filter Update-Config([string]$BookStore = $null) {        
-    $configs = if ($inputs) { $inputs} else { Find-Files -Masks Web.config }
+    $configs = if ($input.Length) { $input} else { Get-Config }
     foreach($configPath in $configs) {
         $config = Select-Xml -Path $configPath -XPath configuration
         if ($BookStore) {
@@ -93,7 +102,7 @@ filter Update-Config([string]$BookStore = $null) {
 # Web.config files.
 ##############################################################################
 function Revert-Config {
-    $configs = if ($inputs) { $inputs} else { Find-Files -Masks Web.config }
+    $configs = if ($input.Length) { $input} else { Get-Config }
     $silent = git reset HEAD $configs
     git checkout -- $configs
     git status
@@ -111,7 +120,7 @@ function Revert-Config {
 # Web.config files.
 ##############################################################################
 function Unstage-Config {
-    $configs = if ($inputs) { $inputs} else { Find-Files -Masks Web.config }
+    $configs = if ($input.Length) { $input} else { Get-Config }
     git reset HEAD $configs
 }
 
@@ -131,7 +140,8 @@ function Unstage-Config {
 #.EXAMPLE
 # Find-Files -Masks *.txt
 ##############################################################################
-function Find-Files($Path = $null, [string[]]$Masks = '*', $MaxDepth = -1, $Depth=0)
+function Find-Files($Path = $null, [string[]]$Masks = '*', $MaxDepth = -1,
+    $Depth=0, [string[]]$AntiMasks = @())
 {
     foreach ($item in Get-ChildItem $Path | Sort-Object -Property Mode,Name)
     {
@@ -139,13 +149,17 @@ function Find-Files($Path = $null, [string[]]$Masks = '*', $MaxDepth = -1, $Dept
         {
             $item
         }
-        if ($MaxDepth -ge 0 -and $Depth -ge $MaxDepth)
+        if ($AntiMasks | Where {$item -like $_})
+        {
+            # Do not recurse.
+        }
+        elseif ($MaxDepth -ge 0 -and $Depth -ge $MaxDepth)
         {
             # We have reached the max depth.  Do not recurse.
         }
         elseif (Test-Path $item.FullName -PathType Container)
         {
-            Find-Files $item.FullName $Masks $MaxDepth ($Depth + 1)
+            Find-Files $item.FullName $Masks $MaxDepth ($Depth + 1) $AntiMasks
         }
     }
 }
@@ -399,5 +413,33 @@ function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '', $TestJs
     Finally
     {
         Stop-Process $webProcess
+    }
+}
+
+##############################################################################
+#.SYNOPSIS
+# Migrate the database.
+#
+#.DESCRIPTION
+# Must be called from a directory with a .csproj and Web.config.
+#
+#.PARAMETER DllName
+# The name of the built binary.  Defaults to the current directory name.
+##############################################################################
+function Migrate-Database($DllName = '') {
+    if (!$DllName) {
+        $DllName =  (get-item .).Name + ".dll"
+    }
+    cp packages\EntityFramework.*\tools\migrate.exe bin\.
+    $originalDir = pwd
+    Try {
+        cd bin
+        .\migrate.exe $dllName /startupConfigurationFile="..\Web.config"
+        if ($LASTEXITCODE) {
+            throw "migrate.exe failed with error code $LASTEXITCODE"
+        }
+    }
+    Finally {
+        cd $originalDir
     }
 }

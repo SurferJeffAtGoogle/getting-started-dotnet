@@ -15,12 +15,5 @@ Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
 
 Update-Config mysql
 Build-Solution
-# Update the database before running the test.
-cp packages\EntityFramework.*\tools\migrate.exe bin\.
-cd bin
-.\migrate.exe 3-binary-data.dll /startupConfigurationFile="..\Web.config"
-if ($LASTEXITCODE) {
-    throw "migrate.exe failed with error code $LASTEXITCODE"
-}
-cd ..
+Migrate-Database
 Run-IISExpressTest
