@@ -30,43 +30,6 @@ $env:GETTING_STARTED_DOTNET = pwd
 $env:APPLICATIONHOST_CONFIG =  Get-ChildItem .\applicationhost.config
 cd $curDir
 
-# Given the name of a website in our ./applicationhost.config, return its port number.
-function GetPortNumber($sitename) {
-    $node = Select-Xml -Path $env:APPLICATIONHOST_CONFIG `
-        -XPath "/configuration/system.applicationHost/sites/site[@name='$sitename']/bindings/binding" | 
-        Select-Object -ExpandProperty Node
-    $chunks = $node.bindingInformation -split ':'
-    $chunks[1]
-}
-
-# Run the the website, as configured in our ./applicationhost.config file.
-function RunIISExpress($sitename) {
-    $argList = ('/config:"' + $env:APPLICATIONHOST_CONFIG + '"'), "/site:$sitename", "/apppool:Clr4IntegratedAppPool"
-    Start-Process iisexpress.exe  -ArgumentList $argList -PassThru
-}
-
-# Run the website, then run the test javascript file with casper.
-# Called by inner runTests.
-function RunIISExpressTest($sitename = '', $testjs = 'test.js') {
-    if ($sitename -eq '') 
-    {
-        $sitename = (get-item -Path ".\").Name
-    }
-    $port = GetPortNumber $sitename
-    $webProcess = RunIISExpress $sitename
-    Try
-    {
-        Start-Sleep -Seconds 4  # Wait for web process to start up.
-        casperjs $testjs http://localhost:$port
-        if ($LASTEXITCODE) {
-            throw "Casperjs failed with error code $LASTEXITCODE"
-        }
-    }
-    Finally
-    {
-        Stop-Process $webProcess
-    }
-}
 
 
 

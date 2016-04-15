@@ -265,7 +265,7 @@ filter Lint-Project {
 #.DESCRIPTION
 # Invokes nuget first, then msbuild.  Throws an exception if 
 ##############################################################################
-function BuildSolution {
+function Build-Solution {
     nuget restore
     if ($LASTEXITCODE) {
         throw "Nuget failed with error code $LASTEXITCODE"
@@ -273,5 +273,83 @@ function BuildSolution {
     msbuild /p:Configuration=Debug
     if ($LASTEXITCODE) {
         throw "Msbuild failed with error code $LASTEXITCODE"
+    }
+}
+
+##############################################################################
+#.SYNOPSIS
+# Gets the port number for an IISExpress web site.
+#
+#.PARAMETER SiteName
+# The name of the website, as listed in applicationhost.config
+#
+#.PARAMETER ApplicationhostConfig
+# The path to applicationhost.config.
+#
+#.OUTPUTS
+# The port number where the web site is specified to run.
+##############################################################################
+function Get-PortNumber($SiteName, $ApplicationhostConfig) {
+    $node = Select-Xml -Path $ApplicationhostConfig `
+        -XPath "/configuration/system.applicationHost/sites/site[@name='$SiteName']/bindings/binding" | 
+        Select-Object -ExpandProperty Node
+    $chunks = $node.bindingInformation -split ':'
+    $chunks[1]
+}
+
+##############################################################################
+#.SYNOPSIS
+# Runs IISExpress for a web site.
+#
+#.PARAMETER SiteName
+# The name of the website, as listed in applicationhost.config
+#
+#.PARAMETER ApplicationhostConfig
+# The path to applicationhost.config.
+#
+#.OUTPUTS
+# The process object
+##############################################################################
+function Run-IISExpress($SiteName,  $ApplicationhostConfig) {
+    $argList = ('/config:"' + $ApplicationhostConfig + '"'), "/site:$SiteName", "/apppool:Clr4IntegratedAppPool"
+    Start-Process iisexpress.exe  -ArgumentList $argList -PassThru
+}
+
+##############################################################################
+#.SYNOPSIS
+# Run the website, then run the test javascript file with casper.
+#
+#.DESCRIPTION
+# Throws an exception if the test fails.
+#
+#.PARAMETER SiteName
+# The name of the website, as listed in applicationhost.config.
+#
+#.PARAMETER ApplicationhostConfig
+# The path to applicationhost.config.  If not
+# specified, searches parent directories for the file.
+#
+##############################################################################
+function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '', $TestJs = 'test.js') {
+    if (!$SiteName) {
+        $SiteName = (get-item -Path ".\").Name
+    }
+    if (!$ApplicationhostConfig) {
+        $ApplicationhostConfig = (UpFind-File 'applicationhost.config').FullName
+    }
+
+    $port = Get-PortNumber $SiteName $ApplicationhostConfig
+    $webProcess = Run-IISExpress $SiteName $ApplicationhostConfig
+    Try
+    {
+        Start-Sleep -Seconds 4  # Wait for web process to start up.
+        casperjs $TestJs http://localhost:$port
+        if ($LASTEXITCODE) {
+            throw "Casperjs failed with error code $LASTEXITCODE"
+        }
+    }
+    Finally
+    {
+        Stop-Process $webProcess
     }
 }
