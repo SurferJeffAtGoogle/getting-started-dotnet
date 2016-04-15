@@ -1,4 +1,4 @@
-﻿# Copyright(c) 2015 Google Inc.
+﻿# Copyright(c) 2016 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -14,27 +14,6 @@
 
 param([switch]$lint)
 
-# Recursively retrieve all the files in a directory that match one of the
-# masks.
-function GetFiles($path = $null, [string[]]$masks = '*', $maxDepth = 0, $depth=-1)
-{
-    foreach ($item in Get-ChildItem $path | Sort-Object -Property Mode,Name)
-    {
-        if ($masks | Where {$item -like $_})
-        {
-            $item
-        }
-        if ($maxDepth -ge 0 -and $depth -ge $maxDepth)
-        {
-            # We have reached the max depth.  Do not recurse.
-        }
-        elseif (Test-Path $item.FullName -PathType Container)
-        {
-            GetFiles $item.FullName $masks $maxDepth ($depth + 1)
-        }
-    }
-}
-
 function GetRootDirectory
 {
     $Invocation = (Get-Variable MyInvocation -Scope 1).Value
@@ -42,89 +21,6 @@ function GetRootDirectory
 }
 
 $rootDir = GetRootDirectory
-
-# Run inner runTests.ps1 scripts.  Script names passed via pipe $input.
-function RunTestScripts 
-{
-    # Keep running lists of successes and failures.
-    # Array of strings: the relative path of the inner script.
-    $successes = @()
-    $failures = @()
-    foreach ($script in $input) {
-        Set-Location $script.Directory
-        $relativePath = $script.FullName.Substring($rootDir.Length + 1, $script.FullName.Length - $rootDir.Length - 1)
-        echo $relativePath
-        # A script can fail two ways.
-        # 1. Throw an exception.
-        # 2. The last command it executed failed. 
-        Try {
-            Invoke-Expression (".\" + $script.Name)
-            if ($LASTEXITCODE) {
-                $failures += $relativePath
-            } else {
-                $successes += $relativePath
-            }
-        }
-        Catch {
-            echo  $_.Exception.Message
-            $failures += $relativePath
-        }
-    }
-    # Print a final summary.
-    echo "==============================================================================="
-    $successCount = $successes.Count
-    echo "$successCount SUCCEEDED"
-    echo $successes
-    $failureCount = $failures.Count
-    echo "$failureCount FAILED"
-    echo $failures
-    # Throw an exception to set ERRORLEVEL to 1 in the calling process.
-    if ($failureCount) {
-        throw "$failureCount FAILED"
-    }
-}
-
-function AddSetting($config, [string]$key, [string]$value) {
-    $x = Select-Xml -Xml $config.Node -XPath "appSettings/add[@key='$key']"
-    if ($x) {
-        $x.Node.value = $value
-    }
-}
-
-function UpdateWebConfig([string]$bookstore) {        
-    $config = Select-Xml -Path .\Web.config -XPath configuration
-    AddSetting $config 'GoogleCloudSamples:BookStore' $bookstore
-    AddSetting $config 'GoogleCloudSamples:ProjectId' $env:GoogleCloudSamples:ProjectId
-    AddSetting $config 'GoogleCloudSamples:BucketName' $env:GoogleCloudSamples:BucketName
-    AddSetting $config 'GoogleCloudSamples:AuthClientId' $env:GoogleCloudSamples:AuthClientId
-    AddSetting $config 'GoogleCloudSamples:AuthClientSecret' $env:GoogleCloudSamples:AuthClientSecret
-    $connectionString = Select-Xml -Xml $config.Node -XPath "connectionStrings/add[@name='LocalMySqlServer']"
-    if ($env:Data:MySql:ConnectionString -and $connectionString) {
-        $connectionString.Node.connectionString = $env:Data:MySql:ConnectionString;        
-    }
-    $config.Node.OwnerDocument.Save($config.Path);
-}
-
-##############################################################################
-# core tests.
-
-dnvm use 1.0.0-rc1-update1 -r clr
-
-# Given a *test.js file, build the project and run the test on localhost.
-filter BuildAndRunLocalTest {
-    dnu restore
-    dnu build
-    $webProcess = Start-Process dnx web -PassThru
-    Try
-    {
-        Start-Sleep -Seconds 4  # Wait for web process to start up.
-        casperjs $_ http://localhost:5000
-    }
-    Finally
-    {
-        Stop-Process $webProcess
-    }
-}
 
 ##############################################################################
 # aspnet tests.
@@ -172,29 +68,7 @@ function RunIISExpressTest($sitename = '', $testjs = 'test.js') {
     }
 }
 
-function BuildSolution() {
-    nuget restore
-    if ($LASTEXITCODE) {
-        throw "Nuget failed with error code $LASTEXITCODE"
-    }
-    msbuild /p:Configuration=Debug
-    if ($LASTEXITCODE) {
-        throw "Msbuild failed with error code $LASTEXITCODE"
-    }
-}
 
-filter RunLint {
-    codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $_.FullName
-    if ($LASTEXITCODE) {
-        throw "codeformatter failed with exit code $LASTEXITCODE."
-    }
-    # If git reports a diff, codeformatter changed something, and that's bad.
-    $diff = git diff
-    if ($diff) {
-        $diff
-        throw "Lint failed for $_"
-    }
-}
 
 ##############################################################################
 # main
