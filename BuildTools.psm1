@@ -38,55 +38,80 @@ function Add-Setting($Config, [string]$Key, [string]$Value) {
 
 ##############################################################################
 #.SYNOPSIS
-# Updates an App.config or Web.config file, pulling values from environment
-# variables.
+# Updates Web.config files, pulling values from environment variables.
 #
-# .DESCRIPTION
-# Don't forget to 'git checkout -- Web.config' before 'git commit'ing!
+#.DESCRIPTION
+# Don't forget to Revert-Config or Unstage-Config before 'git commit'ing!
 #
 #.PARAMETER BookStore
 # Where shall the books be stored?  Valid strings are 'mysql' and 'datastore'.
 # Defaults to pulling the value from an environment variable.
 #
-#.PARAMETER ConfigPath
-# Where is the Web.config file?
+#.INPUTS
+# Paths to Web.config.  If empty, recursively searches directories for
+# Web.config files.
 #
 #.EXAMPLE
 # Update-Config mysql
 ##############################################################################
-function Update-Config([string]$BookStore = $null, [string]$ConfigPath=".\Web.config") {        
-    $config = Select-Xml -Path $ConfigPath -XPath configuration
-    if ($BookStore) {
-        Add-Setting $config 'GoogleCloudSamples:BookStore' $BookStore
-    } else {
-        Add-Setting $config 'GoogleCloudSamples:BookStore' $env:GoogleCloudSamples:BookStore
-    }
-    Add-Setting $config 'GoogleCloudSamples:ProjectId' $env:GoogleCloudSamples:ProjectId
-    Add-Setting $config 'GoogleCloudSamples:BucketName' $env:GoogleCloudSamples:BucketName
-    Add-Setting $config 'GoogleCloudSamples:AuthClientId' $env:GoogleCloudSamples:AuthClientId
-    Add-Setting $config 'GoogleCloudSamples:AuthClientSecret' $env:GoogleCloudSamples:AuthClientSecret
-    $connectionString = Select-Xml -Xml $config.Node -XPath "connectionStrings/add[@name='LocalMySqlServer']"
-    if ($connectionString) {
-        if ($env:GoogleCloudSamples:ConnectionString) {
-            $connectionString.Node.connectionString = $env:GoogleCloudSamples:ConnectionString;        
-        } elseif ($env:Data:MySql:ConnectionString) {
-            # TODO: Stop checking this old environment variable name when we've
-            # updated all the scripts.
-            $connectionString.Node.connectionString = $env:Data:MySql:ConnectionString;        
+filter Update-Config([string]$BookStore = $null) {        
+    $configs = if ($inputs) { $inputs} else { Find-Files -Masks Web.config }
+    foreach($configPath in $configs) {
+        $config = Select-Xml -Path $configPath -XPath configuration
+        if ($BookStore) {
+            Add-Setting $config 'GoogleCloudSamples:BookStore' $BookStore
+        } else {
+            Add-Setting $config 'GoogleCloudSamples:BookStore' $env:GoogleCloudSamples:BookStore
         }
+        Add-Setting $config 'GoogleCloudSamples:ProjectId' $env:GoogleCloudSamples:ProjectId
+        Add-Setting $config 'GoogleCloudSamples:BucketName' $env:GoogleCloudSamples:BucketName
+        Add-Setting $config 'GoogleCloudSamples:AuthClientId' $env:GoogleCloudSamples:AuthClientId
+        Add-Setting $config 'GoogleCloudSamples:AuthClientSecret' $env:GoogleCloudSamples:AuthClientSecret
+        $connectionString = Select-Xml -Xml $config.Node -XPath "connectionStrings/add[@name='LocalMySqlServer']"
+        if ($connectionString) {
+            if ($env:GoogleCloudSamples:ConnectionString) {
+                $connectionString.Node.connectionString = $env:GoogleCloudSamples:ConnectionString;        
+            } elseif ($env:Data:MySql:ConnectionString) {
+                # TODO: Stop checking this old environment variable name when we've
+                # updated all the scripts.
+                $connectionString.Node.connectionString = $env:Data:MySql:ConnectionString;        
+            }
+        }
+        $config.Node.OwnerDocument.Save($config.Path);
     }
-    $config.Node.OwnerDocument.Save($config.Path);
 }
 
-function Revert-Configs {
-    $configs = Find-Files -Masks Web.config
-    $ignore = git reset HEAD $configs
+##############################################################################
+#.SYNOPSIS
+# Reverts Web.config files.
+#
+#.DESCRIPTION
+# git must be in the current PATH.
+#
+#.INPUTS
+# Paths to Web.config.  If empty, recursively searches directories for
+# Web.config files.
+##############################################################################
+function Revert-Config {
+    $configs = if ($inputs) { $inputs} else { Find-Files -Masks Web.config }
+    $silent = git reset HEAD $configs
     git checkout -- $configs
     git status
 }
 
-function Unstage-Configs {
-    $configs = Find-Files -Masks Web.config
+##############################################################################
+#.SYNOPSIS
+# Unstages Web.config files.
+#
+#.DESCRIPTION
+# git must be in the current PATH.
+#
+#.INPUTS
+# Paths to Web.config.  If empty, recursively searches directories for
+# Web.config files.
+##############################################################################
+function Unstage-Config {
+    $configs = if ($inputs) { $inputs} else { Find-Files -Masks Web.config }
     git reset HEAD $configs
 }
 
@@ -239,11 +264,13 @@ filter BuildAndRun-CoreTest {
 # .sln and .csproj files.
 #
 #.EXAMPLE
-# dir *.sln | Format-Code
+# Format-Code
 ##############################################################################
-filter Format-Code {
-    codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $_.FullName
+function Format-Code {
+    $projects = if ($input) {$input} else {Find-Files -Masks *.csproj}
+    codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $project.FullName
     if ($LASTEXITCODE) {
+        $project.FullName
         throw "codeformatter failed with exit code $LASTEXITCODE."
     }
 }
@@ -258,15 +285,18 @@ filter Format-Code {
 # .sln and .csproj files.
 #
 #.EXAMPLE
-# dir *.sln | Lint-Project
+# Lint-Project
 ##############################################################################
-filter Lint-Project {
-    $_.FullName | Format-Code
-    # If git reports a diff, codeformatter changed something, and that's bad.
-    $diff = git diff
-    if ($diff) {
-        $diff
-        throw "Lint failed for $_"
+function Lint-Project {
+    $projects = if ($input) {$input} else {Find-Files -Masks *.csproj}
+    foreach ($project in $projects) {
+        $project| Format-Code
+        # If git reports a diff, codeformatter changed something, and that's bad.
+        $diff = git diff
+        if ($diff) {
+            $diff
+            throw "Lint failed for $_"
+        }
     }
 }
 
@@ -275,7 +305,8 @@ filter Lint-Project {
 # Builds the .sln in the current working directory.
 #
 #.DESCRIPTION
-# Invokes nuget first, then msbuild.  Throws an exception if 
+# Invokes nuget first, then msbuild.  Throws an exception if nuget or the
+# build fails.
 ##############################################################################
 function Build-Solution {
     nuget restore

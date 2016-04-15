@@ -14,27 +14,8 @@
 
 param([switch]$lint)
 
-function GetRootDirectory
-{
-    $Invocation = (Get-Variable MyInvocation -Scope 1).Value
-    Split-Path $Invocation.MyCommand.Path
-}
+Import-Module .\BuildTools.psm1
 
-$rootDir = GetRootDirectory
-
-##############################################################################
-# aspnet tests.
-$curDir = pwd
-cd (Join-Path $rootDir "aspnet")
-$env:GETTING_STARTED_DOTNET = pwd
-$env:APPLICATIONHOST_CONFIG =  Get-ChildItem .\applicationhost.config
-cd $curDir
-
-
-
-
-##############################################################################
-# main
 # Leave the user in the same directory as they started.
 $originalDir = Get-Location
 Try
@@ -42,11 +23,11 @@ Try
     # First, lint everything.  If the lint fails, don't waste time running
     # tests.
     if ($lint) {
-        GetFiles -masks '*.csproj' -maxDepth 2 | RunLint
+        GetFiles -Masks '*.csproj' | Lint-Project
     }
     # Use Where-Object to avoid infinitely recursing, because this script
     # matches the mask.
-    GetFiles -masks '*runtests*.ps1' -maxDepth 2 | Where-Object FullName -ne $PSCommandPath | RunTestScripts
+    GetFiles -Masks '*runtests*.ps1' | Where-Object FullName -ne $PSCommandPath | Run-TestScripts
 }
 Finally
 {
