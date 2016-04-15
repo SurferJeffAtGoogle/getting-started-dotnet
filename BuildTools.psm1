@@ -180,7 +180,6 @@ function UpFind-File([string[]]$Masks = '*')
     }    
 }
 
-
 ##############################################################################
 #.SYNOPSIS
 # Runs powershell scripts and prints a summary of successes and errors.
@@ -267,7 +266,8 @@ filter BuildAndRun-CoreTest {
 # Format-Code
 ##############################################################################
 function Format-Code {
-    $projects = if ($input) {$input} else {Find-Files -Masks *.csproj}
+    $projects = if ($input.Length) {$input} else {Find-Files -Masks *.csproj}
+    throw $projects
     codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $project.FullName
     if ($LASTEXITCODE) {
         $project.FullName
@@ -288,7 +288,7 @@ function Format-Code {
 # Lint-Project
 ##############################################################################
 function Lint-Project {
-    $projects = if ($input) {$input} else {Find-Files -Masks *.csproj}
+    $projects = if ($input.Length) {$input} else {Find-Files -Masks *.csproj}
     foreach ($project in $projects) {
         $project| Format-Code
         # If git reports a diff, codeformatter changed something, and that's bad.
@@ -353,7 +353,7 @@ function Get-PortNumber($SiteName, $ApplicationhostConfig) {
 #.OUTPUTS
 # The process object
 ##############################################################################
-function Run-IISExpress($SiteName,  $ApplicationhostConfig) {
+function Run-IISExpress($SiteName, $ApplicationhostConfig) {
     # Applicationhost.config expects the environment variable
     # GETTING_STARTED_DOTNET to point to the same directory containing
     # applicationhost.config.
