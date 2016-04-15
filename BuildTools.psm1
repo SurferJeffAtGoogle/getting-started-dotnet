@@ -42,7 +42,7 @@ function Add-Setting($Config, [string]$Key, [string]$Value) {
 #
 ##############################################################################
 function Get-Config {
-    Find-Files -Masks Web.config -AntiMasks 'bin', 'packages' | Resolve-Path -Relative
+    Find-Files -Masks Web.config | Resolve-Path -Relative
 }
 
 ##############################################################################
@@ -137,11 +137,14 @@ function Unstage-Config {
 #.PARAMETER MaxDepth
 # How deep should we look into subdirectories?  Default is no limit.
 #
+#.PARAMETER AntiMasks
+# Stop recursing when we reach a directory with a matching name.
+#
 #.EXAMPLE
 # Find-Files -Masks *.txt
 ##############################################################################
 function Find-Files($Path = $null, [string[]]$Masks = '*', $MaxDepth = -1,
-    $Depth=0, [string[]]$AntiMasks = @())
+    $Depth=0, [string[]]$AntiMasks = @('bin', 'obj', 'packages'))
 {
     foreach ($item in Get-ChildItem $Path | Sort-Object -Property Mode,Name)
     {
