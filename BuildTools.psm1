@@ -78,6 +78,18 @@ function Update-Config([string]$BookStore = $null, [string]$ConfigPath=".\Web.co
     $config.Node.OwnerDocument.Save($config.Path);
 }
 
+function Revert-Configs {
+    $configs = Find-Files -Masks Web.config
+    $ignore = git reset HEAD $configs
+    git checkout -- $configs
+    git status
+}
+
+function Unstage-Configs {
+    $configs = Find-Files -Masks Web.config
+    git reset HEAD $configs
+}
+
 ##############################################################################
 #.SYNOPSIS
 # Recursively find all the files that match a mask.
