@@ -23,7 +23,7 @@ Try
     # First, lint everything.  If the lint fails, don't waste time running
     # tests.
     if ($lint) {
-        GetFiles -Masks '*.csproj' | Lint-Project
+        Lint-Code
     }
     # Use Where-Object to avoid infinitely recursing, because this script
     # matches the mask.

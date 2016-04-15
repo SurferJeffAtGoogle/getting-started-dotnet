@@ -288,7 +288,7 @@ function Format-Code {
 #.EXAMPLE
 # Lint-Project
 ##############################################################################
-function Lint-Project {
+function Lint-Code {
     $projects = if ($input.Length) {$input} else {Find-Files -Masks *.csproj}
     foreach ($project in $projects) {
         $project| Format-Code
