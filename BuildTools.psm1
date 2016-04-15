@@ -267,11 +267,12 @@ filter BuildAndRun-CoreTest {
 ##############################################################################
 function Format-Code {
     $projects = if ($input.Length) {$input} else {Find-Files -Masks *.csproj}
-    throw $projects
-    codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $project.FullName
-    if ($LASTEXITCODE) {
-        $project.FullName
-        throw "codeformatter failed with exit code $LASTEXITCODE."
+    foreach ($project in $projects) {
+        codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $project.FullName
+        if ($LASTEXITCODE) {
+            $project.FullName
+            throw "codeformatter failed with exit code $LASTEXITCODE."
+        }
     }
 }
 
