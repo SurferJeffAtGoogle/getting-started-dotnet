@@ -144,7 +144,7 @@ function Unstage-Config {
 # Find-Files -Masks *.txt
 ##############################################################################
 function Find-Files($Path = $null, [string[]]$Masks = '*', $MaxDepth = -1,
-    $Depth=0, [string[]]$AntiMasks = @('bin', 'obj', 'packages'))
+    $Depth=0, [string[]]$AntiMasks = @('bin', 'obj', 'packages', '.git'))
 {
     foreach ($item in Get-ChildItem $Path | Sort-Object -Property Mode,Name)
     {
