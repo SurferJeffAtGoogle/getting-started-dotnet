@@ -278,6 +278,10 @@ filter BuildAndRun-CoreTest {
     }
 }
 
+function Find-Projects ($projects) {
+    if ($projects.Length) {$projects} else {Find-Files -Masks *.csproj}
+}
+
 ##############################################################################
 #.SYNOPSIS
 # Runs code formatter on a project or solution.
@@ -289,7 +293,7 @@ filter BuildAndRun-CoreTest {
 # Format-Code
 ##############################################################################
 function Format-Code {
-    $projects = if ($input.Length) {$input} else {Find-Files -Masks *.csproj}
+    $projects = Find-Projects($input + $args)
     foreach ($project in $projects) {
         codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $project.FullName
         if ($LASTEXITCODE) {
