@@ -27,4 +27,4 @@ Import-Module (Join-Path (GetRootDirectory) BuildTools.psm1) -DisableNameCheckin
 if ($lint) {
     Lint-Code
 }
-Run-Tests
+BuildAndRun-Tests

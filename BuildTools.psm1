@@ -207,10 +207,10 @@ function UpFind-File([string[]]$Masks = '*')
 #.EXAMPLE
 # Run-Tests
 ##############################################################################
-function Run-Tests 
+function BuildAndRun-Tests 
 {
     $scripts = if ($input.Length) {$input} else {
-        GetFiles -Masks '*runtests*.ps1' | Where-Object FullName -ne $PSCommandPath
+        GetFiles -Masks '*runtests*.ps1'
     }
     $rootDir = pwd
     # Keep running lists of successes and failures.
