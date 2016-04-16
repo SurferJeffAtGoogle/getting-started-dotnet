@@ -314,7 +314,7 @@ function Format-Code {
 function Lint-Code {
     $projects = if ($input.Length) {$input} else {Find-Files -Masks *.csproj}
     foreach ($project in $projects) {
-        $project| Format-Code
+        @($project) | Format-Code
         # If git reports a diff, codeformatter changed something, and that's bad.
         $diff = git diff
         if ($diff) {
