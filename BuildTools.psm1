@@ -38,11 +38,27 @@ function Add-Setting($Config, [string]$Key, [string]$Value) {
 
 ##############################################################################
 #.SYNOPSIS
+# Logical operator.
+#
+#.DESCRIPTION
+# When anything in pipelined to the function, outputs the inputs.
+# Otherwise, evaluates the script block and returns the result. 
+#
+#.PARAMETER ScriptBlock
+# The script block to execute if $input is empty.
+##############################################################################
+filter When-Empty([ScriptBlock]$ScriptBlock) {
+    $item = $_
+    if ($item) {$item} else { &$ScriptBlock }
+}
+
+##############################################################################
+#.SYNOPSIS
 # Finds all the Web.config files in subdirectories.
 #
 ##############################################################################
-function Get-Config {
-    Find-Files -Masks Web.config | Resolve-Path -Relative
+filter Get-Config ($Mask="Web.config") {
+    $_ | When-Empty {Find-Files -Masks $Mask} | Resolve-Path -Relative
 }
 
 ##############################################################################
@@ -64,7 +80,7 @@ function Get-Config {
 # Update-Config mysql
 ##############################################################################
 filter Update-Config([string]$BookStore = $null) {        
-    $configs = if ($input.Length) { $input} else { Get-Config }
+    $configs = $_ | Get-Config
     foreach($configPath in $configs) {
         $config = Select-Xml -Path $configPath -XPath configuration
         if ($BookStore) {
@@ -101,8 +117,8 @@ filter Update-Config([string]$BookStore = $null) {
 # Paths to Web.config.  If empty, recursively searches directories for
 # Web.config files.
 ##############################################################################
-function Revert-Config {
-    $configs = if ($input.Length) { $input} else { Get-Config }
+filter Revert-Config {
+    $configs = $_ | Get-Config
     $silent = git reset HEAD $configs
     git checkout -- $configs
     git status
@@ -119,8 +135,8 @@ function Revert-Config {
 # Paths to Web.config.  If empty, recursively searches directories for
 # Web.config files.
 ##############################################################################
-function Unstage-Config {
-    $configs = if ($input.Length) { $input} else { Get-Config }
+filter Unstage-Config {
+    $configs = $_ | Get-Config
     git reset HEAD $configs
 }
 
@@ -150,7 +166,7 @@ function Find-Files($Path = $null, [string[]]$Masks = '*', $MaxDepth = -1,
     {
         if ($Masks | Where {$item -like $_})
         {
-            $item
+            $item.FullName
         }
         if ($AntiMasks | Where {$item -like $_})
         {
@@ -207,11 +223,9 @@ function UpFind-File([string[]]$Masks = '*')
 #.EXAMPLE
 # Run-Tests
 ##############################################################################
-function BuildAndRun-Tests 
+function Run-TestScript 
 {
-    $scripts = if ($input.Length) {$input} else {
-        GetFiles -Masks '*runtests*.ps1'
-    }
+    $scripts = $input | When-Empty { GetFiles -Masks '*runtests*.ps1' }
     $rootDir = pwd
     # Keep running lists of successes and failures.
     # Array of strings: the relative path of the inner script.
@@ -278,10 +292,6 @@ filter BuildAndRun-CoreTest {
     }
 }
 
-function Find-Projects ($projects) {
-    if ($projects.Length) {$projects} else {Find-Files -Masks *.csproj}
-}
-
 ##############################################################################
 #.SYNOPSIS
 # Runs code formatter on a project or solution.
@@ -292,10 +302,10 @@ function Find-Projects ($projects) {
 #.EXAMPLE
 # Format-Code
 ##############################################################################
-function Format-Code {
-    $projects = Find-Projects($input + $args)
+filter Format-Code {
+    $projects = $_ | When-Empty { Find-Files -Masks *.csproj }
     foreach ($project in $projects) {
-        codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $project.FullName
+        codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $project
         if ($LASTEXITCODE) {
             $project.FullName
             throw "codeformatter failed with exit code $LASTEXITCODE."
@@ -315,8 +325,8 @@ function Format-Code {
 #.EXAMPLE
 # Lint-Project
 ##############################################################################
-function Lint-Code {
-    $projects = if ($input.Length) {$input} else {Find-Files -Masks *.csproj}
+filter Lint-Code {
+    $projects = $_ | When-Empty { Find-Files -Masks *.csproj }
     foreach ($project in $projects) {
         @($project) | Format-Code
         # If git reports a diff, codeformatter changed something, and that's bad.
