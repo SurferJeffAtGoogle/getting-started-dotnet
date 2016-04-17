@@ -412,6 +412,12 @@ function Get-PortNumber($SiteName, $ApplicationhostConfig) {
 # The process object
 ##############################################################################
 function Run-IISExpress($SiteName, $ApplicationhostConfig) {
+    if (!$SiteName) {
+        $SiteName = (get-item -Path ".\").Name
+    }
+    if (!$ApplicationhostConfig) {
+        $ApplicationhostConfig = UpFind-File 'applicationhost.config'
+    }
     # Applicationhost.config expects the environment variable
     # GETTING_STARTED_DOTNET to point to the same directory containing
     # applicationhost.config.
@@ -435,7 +441,8 @@ function Run-IISExpress($SiteName, $ApplicationhostConfig) {
 # specified, searches parent directories for the file.
 #
 ##############################################################################
-function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '', $TestJs = 'test.js') {
+function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '', 
+    $TestJs = 'test.js', [switch]$LeaveRunning = $false) {
     if (!$SiteName) {
         $SiteName = (get-item -Path ".\").Name
     }
@@ -455,7 +462,9 @@ function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '', $TestJs
     }
     Finally
     {
-        Stop-Process $webProcess
+        if (!$LeaveRunning) {
+            Stop-Process $webProcess
+        }
     }
 }
 
