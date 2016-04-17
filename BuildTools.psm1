@@ -207,7 +207,7 @@ function UpFind-File([string[]]$Masks = '*')
         {
             if ($Masks | Where {$item -like $_})
             {
-                return $item
+                return $item.FullName
             }
         }
         if (!$dir.parent)
@@ -228,16 +228,19 @@ function UpFind-File([string[]]$Masks = '*')
 #.EXAMPLE
 # Run-Tests
 ##############################################################################
-function Run-TestScript 
+function Run-TestScripts
 {
-    $scripts = When-Empty -ArgList ($input + $args) -ScriptBlock { GetFiles -Masks '*runtests*.ps1' } | Get-Item
+    $scripts = When-Empty -ArgList ($input + $args) -ScriptBlock { Find-Files -Masks '*runtests*.ps1' } | Get-Item
     $rootDir = pwd
     # Keep running lists of successes and failures.
     # Array of strings: the relative path of the inner script.
     $successes = @()
     $failures = @()
+    $separator = $null
     foreach ($script in $scripts) {
         $relativePath = Resolve-Path -Relative $script.FullName
+        echo $separator
+        $separator = "-" * 79
         echo $relativePath
         Set-Location $script.Directory
         # A script can fail two ways.
@@ -260,7 +263,7 @@ function Run-TestScript
         }
     }
     # Print a final summary.
-    echo "==============================================================================="
+    echo ("=" * 79)
     $successCount = $successes.Count
     echo "$successCount SUCCEEDED"
     echo $successes
@@ -425,7 +428,7 @@ function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '', $TestJs
         $SiteName = (get-item -Path ".\").Name
     }
     if (!$ApplicationhostConfig) {
-        $ApplicationhostConfig = (UpFind-File 'applicationhost.config').FullName
+        $ApplicationhostConfig = UpFind-File 'applicationhost.config'
     }
 
     $port = Get-PortNumber $SiteName $ApplicationhostConfig
@@ -458,7 +461,7 @@ function Migrate-Database($DllName = '') {
     if (!$DllName) {
         $DllName =  (get-item .).Name + ".dll"
     }
-    cp (Join-Path (UpFind-File packages).FullName EntityFramework.*\tools\migrate.exe) bin\.
+    cp (Join-Path (UpFind-File packages) EntityFramework.*\tools\migrate.exe) bin\.
     $originalDir = pwd
     Try {
         cd bin
