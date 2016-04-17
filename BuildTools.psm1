@@ -47,9 +47,14 @@ function Add-Setting($Config, [string]$Key, [string]$Value) {
 #.PARAMETER ScriptBlock
 # The script block to execute if $input is empty.
 ##############################################################################
-filter When-Empty([ScriptBlock]$ScriptBlock) {
-    $item = $_
-    if ($item) {$item} else { &$ScriptBlock }
+function When-Empty($Target, $ArgList, [ScriptBlock]$ScriptBlock) {
+    if ($Target) {
+        @($Target) + $ArgList
+    } elseif ($ArgList) {
+        $ArgList
+    } else {
+        &$ScriptBlock
+    }
 }
 
 ##############################################################################
@@ -58,7 +63,7 @@ filter When-Empty([ScriptBlock]$ScriptBlock) {
 #
 ##############################################################################
 filter Get-Config ($Mask="Web.config") {
-    $_ | When-Empty {Find-Files -Masks $Mask} | Resolve-Path -Relative
+    When-Empty $_ $args {Find-Files -Masks $Mask} | Resolve-Path -Relative
 }
 
 ##############################################################################
@@ -225,7 +230,7 @@ function UpFind-File([string[]]$Masks = '*')
 ##############################################################################
 function Run-TestScript 
 {
-    $scripts = $input | When-Empty { GetFiles -Masks '*runtests*.ps1' }
+    $scripts = When-Empty -ArgList ($input + $args) -ScriptBlock { GetFiles -Masks '*runtests*.ps1' } | Get-Item
     $rootDir = pwd
     # Keep running lists of successes and failures.
     # Array of strings: the relative path of the inner script.
@@ -303,7 +308,7 @@ filter BuildAndRun-CoreTest {
 # Format-Code
 ##############################################################################
 filter Format-Code {
-    $projects = $_ | When-Empty { Find-Files -Masks *.csproj }
+    $projects = When-Empty $_ $args { Find-Files -Masks *.csproj }
     foreach ($project in $projects) {
         codeformatter.exe /rule:BraceNewLine /rule:ExplicitThis /rule:ExplicitVisibility /rule:FieldNames /rule:FormatDocument /rule:ReadonlyFields /rule:UsingLocation /nocopyright $project
         if ($LASTEXITCODE) {
@@ -326,7 +331,7 @@ filter Format-Code {
 # Lint-Project
 ##############################################################################
 filter Lint-Code {
-    $projects = $_ | When-Empty { Find-Files -Masks *.csproj }
+    $projects = When-Empty $_ $args { Find-Files -Masks *.csproj }
     foreach ($project in $projects) {
         @($project) | Format-Code
         # If git reports a diff, codeformatter changed something, and that's bad.
@@ -346,7 +351,7 @@ filter Lint-Code {
 # Invokes nuget first, then msbuild.  Throws an exception if nuget or the
 # build fails.
 ##############################################################################
-function Build-Solution($solution=$null) {
+function Build-Solution($solution) {
     nuget restore $solution
     if ($LASTEXITCODE) {
         throw "Nuget failed with error code $LASTEXITCODE"
