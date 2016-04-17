@@ -13,7 +13,7 @@
 # the License.
 Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
 
-Update-Config mysql
+Set-BookStore mysql
 Build-Solution
 Migrate-Database
 Run-IISExpressTest

@@ -13,6 +13,6 @@
 # the License.
 Import-Module ..\..\..\BuildTools.psm1 -DisableNameChecking
 
-Update-Config datastore
+Set-BookStore datastore
 Build-Solution ..\5-pubsub.sln
 Run-IISExpressTest 5-pubsub-worker

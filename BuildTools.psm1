@@ -84,15 +84,11 @@ filter Get-Config ($Mask="Web.config") {
 #.EXAMPLE
 # Update-Config mysql
 ##############################################################################
-filter Update-Config([string]$BookStore = $null) {        
+filter Update-Config {        
     $configs = $_ | Get-Config
     foreach($configPath in $configs) {
         $config = Select-Xml -Path $configPath -XPath configuration
-        if ($BookStore) {
-            Add-Setting $config 'GoogleCloudSamples:BookStore' $BookStore
-        } else {
-            Add-Setting $config 'GoogleCloudSamples:BookStore' $env:GoogleCloudSamples:BookStore
-        }
+        Add-Setting $config 'GoogleCloudSamples:BookStore' $env:GoogleCloudSamples:BookStore
         Add-Setting $config 'GoogleCloudSamples:ProjectId' $env:GoogleCloudSamples:ProjectId
         Add-Setting $config 'GoogleCloudSamples:BucketName' $env:GoogleCloudSamples:BucketName
         Add-Setting $config 'GoogleCloudSamples:AuthClientId' $env:GoogleCloudSamples:AuthClientId
@@ -107,6 +103,15 @@ filter Update-Config([string]$BookStore = $null) {
                 $connectionString.Node.connectionString = $env:Data:MySql:ConnectionString;        
             }
         }
+        $config.Node.OwnerDocument.Save($config.Path);
+    }
+}
+
+filter Set-Bookstore($BookStore) {
+    $configs = $_ | Get-Config
+    foreach($configPath in $configs) {
+        $config = Select-Xml -Path $configPath -XPath configuration
+        Add-Setting $config 'GoogleCloudSamples:BookStore' $BookStore
         $config.Node.OwnerDocument.Save($config.Path);
     }
 }
@@ -126,7 +131,6 @@ filter Revert-Config {
     $configs = $_ | Get-Config
     $silent = git reset HEAD $configs
     git checkout -- $configs
-    git status
 }
 
 ##############################################################################
