@@ -27,10 +27,10 @@ Import-Module (Join-Path (GetRootDirectory) BuildTools.psm1) -DisableNameCheckin
 if ($lint) {
     Lint-Code
 }
-Update-Config
+$modifiedConfigs = Update-Config
 Try {
     Run-TestScripts
 }
 Finally {
-    Revert-Config
+    Revert-Config $modifiedConfigs
 }

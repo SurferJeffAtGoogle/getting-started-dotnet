@@ -73,9 +73,9 @@ filter Get-Config ($Target, $ArgList, $Mask="Web.config") {
 #.DESCRIPTION
 # Don't forget to Revert-Config or Unstage-Config before 'git commit'ing!
 #
-#.PARAMETER BookStore
-# Where shall the books be stored?  Valid strings are 'mysql' and 'datastore'.
-# Defaults to pulling the value from an environment variable.
+#.PARAMETER Yes
+# Never ask the user if they want to overwrite a modified Web.config.  Just
+# overwrite it.
 #
 #.INPUTS
 # Paths to Web.config.  If empty, recursively searches directories for
@@ -111,6 +111,7 @@ filter Update-Config ([switch]$Yes) {
             }
         }
         $config.Node.OwnerDocument.Save($config.Path);
+        $config.Path
     }
 }
 
