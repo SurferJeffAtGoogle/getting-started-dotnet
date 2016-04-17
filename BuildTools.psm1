@@ -62,8 +62,8 @@ function When-Empty($Target, $ArgList, [ScriptBlock]$ScriptBlock) {
 # Finds all the Web.config files in subdirectories.
 #
 ##############################################################################
-filter Get-Config ($Mask="Web.config") {
-    When-Empty $_ $args {Find-Files -Masks $Mask} | Resolve-Path -Relative
+filter Get-Config ($Target, $ArgList, $Mask="Web.config") {
+    When-Empty $Target $ArgList {Find-Files -Masks $Mask} | Resolve-Path -Relative
 }
 
 ##############################################################################
@@ -84,9 +84,16 @@ filter Get-Config ($Mask="Web.config") {
 #.EXAMPLE
 # Update-Config mysql
 ##############################################################################
-filter Update-Config {        
-    $configs = $_ | Get-Config
+filter Update-Config ([switch]$Yes) {        
+    $configs = Get-Config $_ $args
     foreach($configPath in $configs) {
+        if (-not $Yes -and (git status -s $configPath)) {
+            do {
+                $reply = Read-Host "$configPath is modified.  Overwrite? [Y]es, [N]o, Yes to [A]ll"
+            } until ("y", "n", "a" -contains $reply)
+            if ("n" -eq $reply) { continue }
+            if ("a" -eq $reply) { $Yes = $true }
+        }
         $config = Select-Xml -Path $configPath -XPath configuration
         Add-Setting $config 'GoogleCloudSamples:BookStore' $env:GoogleCloudSamples:BookStore
         Add-Setting $config 'GoogleCloudSamples:ProjectId' $env:GoogleCloudSamples:ProjectId
@@ -108,11 +115,11 @@ filter Update-Config {
 }
 
 filter Set-Bookstore($BookStore) {
-    $configs = $_ | Get-Config
+    $configs = Get-Config $_ $args
     foreach($configPath in $configs) {
         $config = Select-Xml -Path $configPath -XPath configuration
         Add-Setting $config 'GoogleCloudSamples:BookStore' $BookStore
-        $config.Node.OwnerDocument.Save($config.Path);
+        $config.Node.OwnerDocument.Save($config.Path)
     }
 }
 
@@ -128,7 +135,7 @@ filter Set-Bookstore($BookStore) {
 # Web.config files.
 ##############################################################################
 filter Revert-Config {
-    $configs = $_ | Get-Config
+    $configs = Get-Config $_ $args
     $silent = git reset HEAD $configs
     git checkout -- $configs
 }
@@ -145,7 +152,7 @@ filter Revert-Config {
 # Web.config files.
 ##############################################################################
 filter Unstage-Config {
-    $configs = $_ | Get-Config
+    $configs = Get-Config $_ $args
     git reset HEAD $configs
 }
 
