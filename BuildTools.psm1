@@ -71,6 +71,7 @@ filter Get-Config ($Target, $ArgList, $Mask="Web.config") {
 # Updates Web.config files, pulling values from environment variables.
 #
 #.DESCRIPTION
+# Asks the user before overwriting files that have already been modified.
 # Don't forget to Revert-Config or Unstage-Config before 'git commit'ing!
 #
 #.PARAMETER Yes
@@ -81,8 +82,11 @@ filter Get-Config ($Target, $ArgList, $Mask="Web.config") {
 # Paths to Web.config.  If empty, recursively searches directories for
 # Web.config files.
 #
+#.OUTPUTs
+# Paths to Web.configs that this function modified.
+#
 #.EXAMPLE
-# Update-Config mysql
+# Update-Config 
 ##############################################################################
 filter Update-Config ([switch]$Yes) {        
     $configs = Get-Config $_ $args
@@ -115,7 +119,18 @@ filter Update-Config ([switch]$Yes) {
     }
 }
 
-filter Set-Bookstore($BookStore) {
+##############################################################################
+#.SYNOPSIS
+# Updates Web.config files.  Sets the BookStore setting.
+#
+#.INPUTS
+# Paths to Web.config.  If empty, recursively searches directories for
+# Web.config files.
+#
+#.EXAMPLE
+# Set-BookStore mysql
+##############################################################################
+filter Set-BookStore($BookStore) {
     $configs = Get-Config $_ $args
     foreach($configPath in $configs) {
         $config = Select-Xml -Path $configPath -XPath configuration
@@ -235,7 +250,8 @@ function UpFind-File([string[]]$Masks = '*')
 # Runs powershell scripts and prints a summary of successes and errors.
 #
 #.INPUTS
-# Powershell scripts.
+# Powershell scripts.  If empty, recursively searches directories for
+# scripts with 'runtests' in their names.
 #
 #.EXAMPLE
 # Run-Tests
@@ -317,7 +333,8 @@ filter BuildAndRun-CoreTest {
 # Runs code formatter on a project or solution.
 #
 #.INPUTS
-# .sln and .csproj files.
+# .sln and .csproj files. If empty, recursively searches directories for
+# project files.
 #
 #.EXAMPLE
 # Format-Code
@@ -340,7 +357,8 @@ filter Format-Code {
 #.DESCRIPTION Throws an exception if code formatter actually changed something.
 #
 #.INPUTS
-# .sln and .csproj files.
+# .sln and .csproj files. If empty, recursively searches directories for
+# project files.
 #
 #.EXAMPLE
 # Lint-Project
@@ -480,8 +498,13 @@ function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '',
 ##############################################################################
 function Migrate-Database($DllName = '') {
     if (!$DllName) {
+        # Default to the name of the current directory + .dll
+        # For example, if the current directory is 3-binary-data, then the
+        # dll name will be 3-binary-data.dll.
         $DllName =  (get-item .).Name + ".dll"
     }
+    # Migrate.exe cannot be run in place.  It must be copied to the bin directory
+    # and run from there.
     cp (Join-Path (UpFind-File packages) EntityFramework.*\tools\migrate.exe) bin\.
     $originalDir = pwd
     Try {
