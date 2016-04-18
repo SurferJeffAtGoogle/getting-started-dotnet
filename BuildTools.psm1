@@ -12,6 +12,61 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+##############################################################################
+# HOW TO USE THE FUNCTIONS IN THIS MODULE
+##############################################################################
+<#
+
+PS ...> Import-Module .\BuildTools.psm1
+WARNING: The names of some imported commands from the module 'BuildTools' include unapproved verbs that might make them less 
+discoverable. To find the commands with unapproved verbs, run the Import-Module command again with the Verbose parameter. For
+ a list of approved verbs, type Get-Verb.
+PS ...> cd .\aspnet\2-structured-data
+PS ...\aspnet\2-structured-data> Run-TestScripts
+...
+0 SUCCEEDED
+2 FAILED
+.\runTestsWithDatastore.ps1
+.\runTestsWithSql.ps1
+
+# Oh no!  My tests failed.  I forgot to update the Web.Configs from my
+# environment variables.
+PS ...\aspnet\2-structured-data> Update-Config
+.\Web.config is modified.  Overwrite? [Y]es, [N]o, Yes to [A]ll: a
+C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\2-structured-data\Web.config
+C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\2-structured-data\Views\Web.config
+
+# And run the tests again.
+PS ...\aspnet\2-structured-data> Run-TestScripts
+...
+2 SUCCEEDED
+.\runTestsWithDatastore.ps1
+.\runTestsWithSql.ps1
+0 FAILED
+
+# Yay!  They succeeded.
+# I can also just run any test script directly:
+PS ...\aspnet\2-structured-data> .\runTestsWithDatastore.ps1
+...
+PASS 4 tests executed in 10.671s, 4 passed, 0 failed.
+
+# Or, I can run the test and leave IISExpress running to debug:
+PS ...\aspnet\2-structured-data> Set-BookStore mysql
+PS ...\aspnet\2-structured-data> Run-IISExpressTest -LeaveRunning
+
+# Don't submit the changes to Web.configs.
+PS ...\aspnet\2-structured-data> Unstage-Config
+Unstaged changes after reset:
+M	aspnet/2-structured-data/Views/Web.config
+M	aspnet/2-structured-data/Web.config
+
+# Submit my changes.
+PS ...\aspnet\2-structured-data>git commit
+
+# Clean up, cause I'm done.
+PS ...\aspnet\2-structured-data> Revert-Config
+
+#>
 
 ##############################################################################
 #.SYNOPSIS
