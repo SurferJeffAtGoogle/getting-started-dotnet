@@ -313,7 +313,7 @@ function UpFind-File([string[]]$Masks = '*')
 ##############################################################################
 function Run-TestScripts
 {
-    $scripts = When-Empty -ArgList ($input + $args) -ScriptBlock { Find-Files -Masks '*runtests*.ps1' } | Get-Item
+    $scripts = When-Empty -ArgList ($input + $args) -ScriptBlock { Find-Files -Masks '*run*test*.ps1' } | Get-Item
     $rootDir = pwd
     # Keep running lists of successes and failures.
     # Array of strings: the relative path of the inner script.
