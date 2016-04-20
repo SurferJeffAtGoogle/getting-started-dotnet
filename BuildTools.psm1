@@ -624,7 +624,7 @@ filter Update-Packages ([string] $Mask) {
 #.OUTPUTS
 # The output of the call to msdeploy.
 ##############################################################################
-function Deploy-Website([string]$LocalDir="webdeploy", `
+function Deploy-WebDeploy([string]$LocalDir="webdeploy",
         [string]$PublishSettings=$env:GoogleCloudSamples:PublishSettings) {
     # Msdeploy's argument syntax confuses powershell and causes errors.
     # The only way I've found to invoke it is via Start-Process.
@@ -645,14 +645,24 @@ function Deploy-Website([string]$LocalDir="webdeploy", `
     }
 }
 
-filter Build-Website {
+filter Build-WebDeploy {
     $projects = When-Empty $_ $args { Find-Files -Masks *.csproj }
     foreach ($project in $projects) {
         $localDir = Join-Path (Split-Path $project) webdeploy
-        echo msbuild /target:PublishToFileSystem $project /property:PublishDestination=$localDir,configuration=release
         msbuild /target:PublishToFileSystem $project /property:PublishDestination=$localDir,configuration=release
         if ($LASTEXITCODE) {
             throw "msbuild failed with error code $LASTEXITCODE"
         }
+    }
+}
+
+
+function Run-WebDeployTest([string]$PublishSettings=$env:GoogleCloudSamples:PublishSettings,
+        $TestJs = 'test.js') {
+    Deploy-WebDeploy $PublishSettings
+    $profile = select-xml -Path $PublishSettings -XPath /publishData/publishProfile
+    casperjs $TestJs $profile.Node.destinationAppUrl
+    if ($LASTEXITCODE) {
+        throw "Casperjs failed with error code $LASTEXITCODE"
     }
 }

@@ -14,6 +14,8 @@
 Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
 
 
-Build-Website
+nuget restore
+Build-WebDeploy
+Run-WebDeployTest
 
-# Deploy-Website 'C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\1-hello-world\tmp' 'C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\1-hello-world\www.publishsettings'
+
