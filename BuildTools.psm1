@@ -605,3 +605,53 @@ filter Update-Packages ([string] $Mask) {
         }
     }
 }
+
+##############################################################################
+#.SYNOPSIS
+# Deploys a website via web deploy.
+#
+#.DESCRIPTION
+# Runs msdeploy to deploy a local directory to a remote IIS server.
+# Create a new publish settings file like this:
+# PS > New-WDPublishSettings -AllowUntrusted -ComputerName 1.2.3.4 -UserId userid -Password YadaYada -FileName www.publishsettings -Site "Default Web Site" -SiteUrl "http://1.2.3.4/" -AgentType WMSvc
+#
+#.PARAMETER LocalDir
+# The full path of the local directory.
+#
+#.PARAMETER PublishSettings
+# The full path of the .publishsettings file specifying the destination.
+#
+#.OUTPUTS
+# The output of the call to msdeploy.
+##############################################################################
+function Deploy-Website([string]$LocalDir="webdeploy", `
+        [string]$PublishSettings=$env:GoogleCloudSamples:PublishSettings) {
+    # Msdeploy's argument syntax confuses powershell and causes errors.
+    # The only way I've found to invoke it is via Start-Process.
+    $localDirFullName = (Get-Item $LocalDir).FullName
+    $argList = [string[]]@(
+        "-verb:sync",
+        "-source:contentPath='$localDirFullName'",
+        "-dest:auto,publishSettings='$PublishSettings'")
+
+    $stdout = New-TemporaryFile
+    $stderr = New-TemporaryFile
+    "msdeploy $($argList -join ' ')"
+    Start-Process msdeploy -ArgumentList $argList -Wait -NoNewWindow -RedirectStandardError $stderr -RedirectStandardOutput $stdout
+    Get-Content stdout.txt
+    $errors = Get-Content stderr.txt -Raw
+    if ($errors) {
+        throw "msdeploy $($argList -join ' ')`n$errors"
+    }
+}
+
+filter Build-Website {
+    $projects = When-Empty $_ $args { Find-Files -Masks *.csproj }
+    foreach ($project in $projects) {
+        $localDir = Join-Path (Split-Path $project) webdeploy
+        msbuild /target:PublishToFileSystem $project /property:PublishDestination=$localDir,configuration=release
+        if ($LASTEXITCODE) {
+            throw "msbuild failed with error code $LASTEXITCODE"
+        }
+    }
+}
