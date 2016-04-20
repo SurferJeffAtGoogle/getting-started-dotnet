@@ -14,16 +14,24 @@
 Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
 Add-PSSnapin WDeploySnapin3.0
 
-New-WDPublishSettings -AllowUntrusted -ComputerName 104.154.45.60 -UserId root -Password YadaYada -FileName www.publishsettings -Site "Default Web Site" -SiteUrl "http://104.154.45.60/" -AgentType WMSvc
+# New-WDPublishSettings -AllowUntrusted -ComputerName 104.154.45.60 -UserId root -Password YadaYada -FileName www.publishsettings -Site "Default Web Site" -SiteUrl "http://104.154.45.60/" -AgentType WMSvc
 
-$argList = [string[]]@(
-    "-verb:sync",
-    "-source:contentPath='C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\1-hello-world\tmp'",
-    "-dest:auto,publishSettings='C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\1-hello-world\www.publishsettings'")
+function Deploy-Website([string]$LocalDir, [string]$PublishSettings) {
+    # Msdeploy's argument syntax confuses powershell and causes errors.
+    # The only way I've found to invoke it is via Start-Process.
+    $argList = [string[]]@(
+        "-verb:sync",
+        "-source:contentPath='$LocalDir'",
+        "-dest:auto,publishSettings='$PublishSettings'")
 
-$proc = Start-Process msdeploy -ArgumentList $argList -Wait -NoNewWindow -RedirectStandardError stderr.txt -RedirectStandardOutput stdout.txt
-Get-Content stdout.txt
-$errors = Get-Content stderr.txt -Raw
-if ($errors) {
-    $errors | Write-Error
+    $stdout = New-TemporaryFile
+    $stderr = New-TemporaryFile
+    Start-Process msdeploy -ArgumentList $argList -Wait -NoNewWindow -RedirectStandardError $stderr -RedirectStandardOutput $stdout
+    Get-Content stdout.txt
+    $errors = Get-Content stderr.txt -Raw
+    if ($errors) {
+        throw "msdeploy $($argList -join ' ')`n$errors"
+    }
 }
+
+Deploy-Website 'C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\1-hello-world\tmp' 'C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\1-hello-world\www.publishsettings'
