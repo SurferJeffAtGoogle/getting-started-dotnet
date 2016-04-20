@@ -438,13 +438,25 @@ filter Lint-Code {
 # build fails.
 ##############################################################################
 function Build-Solution($solution) {
-    nuget restore $solution
-    if ($LASTEXITCODE) {
-        throw "Nuget failed with error code $LASTEXITCODE"
-    }
+    Restore-NugetPackages
     msbuild /p:Configuration=Debug $solution
     if ($LASTEXITCODE) {
         throw "Msbuild failed with error code $LASTEXITCODE"
+    }
+}
+
+##############################################################################
+#.SYNOPSIS
+# Builds the .sln in the current working directory.
+#
+#.DESCRIPTION
+# Invokes nuget first, then msbuild.  Throws an exception if nuget or the
+# build fails.
+##############################################################################
+function Restore-NugetPackages($solution) {
+    nuget restore $solution
+    if ($LASTEXITCODE) {
+        throw "Nuget failed with error code $LASTEXITCODE"
     }
 }
 
@@ -645,6 +657,18 @@ function Deploy-WebDeploy([string]$LocalDir="webdeploy",
     }
 }
 
+##############################################################################
+#.SYNOPSIS
+# Builds a webdeploy project for a *.csproj
+#
+#.DESCRIPTION
+# Builds the project into a webdeploy directory that can be copied to an
+# IIS server.
+#
+#.INPUTS
+# .sln and .csproj files. If empty, recursively searches directories for
+# project files.
+##############################################################################
 filter Build-WebDeploy {
     $projects = When-Empty $_ $args { Find-Files -Masks *.csproj }
     foreach ($project in $projects) {
@@ -656,7 +680,24 @@ filter Build-WebDeploy {
     }
 }
 
-
+##############################################################################
+#.SYNOPSIS
+# Deploys a website via web deploy, then runs a casperjs test.
+#
+#.DESCRIPTION
+# Runs msdeploy to deploy a local directory to a remote IIS server.
+# Create a new publish settings file like this:
+# PS > New-WDPublishSettings -AllowUntrusted -ComputerName 1.2.3.4 -UserId userid -Password YadaYada -FileName www.publishsettings -Site "Default Web Site" -SiteUrl "http://1.2.3.4/" -AgentType WMSvc
+#
+#.PARAMETER TestJs
+# The path of the test javascript file to run.
+#
+#.PARAMETER PublishSettings
+# The full path of the .publishsettings file specifying the destination.
+#
+#.OUTPUTS
+# The output of the call to msdeploy and casperjs.
+##############################################################################
 function Run-WebDeployTest([string]$PublishSettings=$env:GoogleCloudSamples:PublishSettings,
         $TestJs = 'test.js') {
     Deploy-WebDeploy -PublishSettings $PublishSettings

@@ -13,9 +13,7 @@
 # the License.
 Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
 
-
+Restore-NugetPackages
 nuget restore
 Build-WebDeploy
 Run-WebDeployTest
-
-

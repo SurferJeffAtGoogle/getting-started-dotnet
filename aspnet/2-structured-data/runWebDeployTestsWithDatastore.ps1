@@ -13,7 +13,7 @@
 # the License.
 Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
 
-nuget restore
+Restore-NugetPackages
 Set-BookStore datastore
 Build-WebDeploy
 Run-WebDeployTest
