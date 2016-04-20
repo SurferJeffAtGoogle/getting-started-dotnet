@@ -30,8 +30,8 @@ if ($UpdatePackages) {
 }
 $private:modifiedConfigs = Update-Config
 Try {
-    $mask = if ($WebDeploy) {"*runWebDeployTest*.ps1"} else {"*runTest*.ps1"}
-    $private:testScripts = Find-Files -Masks $mask
+    $masks = if ($WebDeploy) {"*runWebDeployTest*.ps1"} else {"*runTest*.ps1"}
+    $private:testScripts = Find-Files -Masks $masks
     # Avoid infinitely recursing and invoking this script.
     $testScripts | where {$_ -ne $invocation.MyCommand.Path} |  Run-TestScripts
 }

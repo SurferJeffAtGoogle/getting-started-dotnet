@@ -632,7 +632,7 @@ function Deploy-WebDeploy([string]$LocalDir="webdeploy",
     $argList = [string[]]@(
         "-verb:sync",
         "-source:contentPath='$localDirFullName'",
-        "-dest:auto,publishSettings='$PublishSettings'")
+        "-dest:contentPath='C:\inetpub\wwwroot',publishSettings='$PublishSettings'")
 
     $stdout = New-TemporaryFile
     $stderr = New-TemporaryFile
@@ -659,7 +659,7 @@ filter Build-WebDeploy {
 
 function Run-WebDeployTest([string]$PublishSettings=$env:GoogleCloudSamples:PublishSettings,
         $TestJs = 'test.js') {
-    Deploy-WebDeploy $PublishSettings
+    Deploy-WebDeploy -PublishSettings $PublishSettings
     $profile = select-xml -Path $PublishSettings -XPath /publishData/publishProfile
     casperjs $TestJs $profile.Node.destinationAppUrl
     if ($LASTEXITCODE) {
