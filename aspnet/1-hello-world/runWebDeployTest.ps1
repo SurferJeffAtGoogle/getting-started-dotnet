@@ -14,6 +14,16 @@
 Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
 Add-PSSnapin WDeploySnapin3.0
 
-Build-Solution
+New-WDPublishSettings -AllowUntrusted -ComputerName 104.154.45.60 -UserId root -Password YadaYada -FileName www.publishsettings -Site "Default Web Site" -SiteUrl "http://104.154.45.60/" -AgentType WMSvc
 
-C:\Program Files (x86)\IIS\Microsoft Web Deploy V3
+$argList = [string[]]@(
+    "-verb:sync",
+    "-source:contentPath='C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\1-hello-world\tmp'",
+    "-dest:auto,publishSettings='C:\Users\Jeffrey Rennie\gitrepos\getting-started-dotnet\aspnet\1-hello-world\www.publishsettings'")
+
+$proc = Start-Process msdeploy -ArgumentList $argList -Wait -NoNewWindow -RedirectStandardError stderr.txt -RedirectStandardOutput stdout.txt
+Get-Content stdout.txt
+$errors = Get-Content stderr.txt -Raw
+if ($errors) {
+    $errors | Write-Error
+}
