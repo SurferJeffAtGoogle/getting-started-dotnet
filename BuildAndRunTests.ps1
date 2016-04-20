@@ -12,7 +12,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-param([switch]$Lint, [switch]$UpdatePackages, [string]$PackageMask="Google.*")
+param([switch]$Lint, [switch]$UpdatePackages, [string]$PackageMask="Google.*",
+    [switch]$WebDeploy)
 
 $private:invocation = (Get-Variable MyInvocation -Scope 0).Value
 
@@ -29,7 +30,8 @@ if ($UpdatePackages) {
 }
 $private:modifiedConfigs = Update-Config
 Try {
-    $private:testScripts = Find-Files -Masks '*runtests*.ps1' 
+    $mask = if ($WebDeploy) {"*runWebDeployTest*.ps1"} else {"*runTest*.ps1"}
+    $private:testScripts = Find-Files -Masks $mask
     # Avoid infinitely recursing and invoking this script.
     $testScripts | where {$_ -ne $invocation.MyCommand.Path} |  Run-TestScripts
 }
