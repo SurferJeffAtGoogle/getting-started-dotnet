@@ -638,8 +638,8 @@ function Deploy-Website([string]$LocalDir="webdeploy", `
     $stderr = New-TemporaryFile
     "msdeploy $($argList -join ' ')"
     Start-Process msdeploy -ArgumentList $argList -Wait -NoNewWindow -RedirectStandardError $stderr -RedirectStandardOutput $stdout
-    Get-Content stdout.txt
-    $errors = Get-Content stderr.txt -Raw
+    Get-Content $stdout
+    $errors = Get-Content $stderr -Raw
     if ($errors) {
         throw "msdeploy $($argList -join ' ')`n$errors"
     }
@@ -649,6 +649,7 @@ filter Build-Website {
     $projects = When-Empty $_ $args { Find-Files -Masks *.csproj }
     foreach ($project in $projects) {
         $localDir = Join-Path (Split-Path $project) webdeploy
+        echo msbuild /target:PublishToFileSystem $project /property:PublishDestination=$localDir,configuration=release
         msbuild /target:PublishToFileSystem $project /property:PublishDestination=$localDir,configuration=release
         if ($LASTEXITCODE) {
             throw "msbuild failed with error code $LASTEXITCODE"
