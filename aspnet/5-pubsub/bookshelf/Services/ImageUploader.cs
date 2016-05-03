@@ -25,11 +25,12 @@ namespace GoogleCloudSamples.Services
         private readonly string _bucketName;
         private readonly StorageClient _storageClient;
 
-        public ImageUploader(string bucketName)
+        public ImageUploader(string bucketName, string applicationName)
         {
             _bucketName = bucketName;
             // [START storageclient]
-            _storageClient = StorageClient.Create();
+            _storageClient = StorageClient
+                .FromApplicationCredentials(applicationName).Result;
             // [END storageclient]
         }
 
