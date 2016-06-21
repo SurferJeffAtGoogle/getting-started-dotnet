@@ -135,6 +135,7 @@ namespace GoogleCloudSamples.Models
             {
                 Console.WriteLine(book.Title);
             }
+            DatastoreClient.ShutdownDefaultChannelsAsync();
             return;
         }
         
