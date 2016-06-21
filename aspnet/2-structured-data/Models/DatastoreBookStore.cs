@@ -120,6 +120,23 @@ namespace GoogleCloudSamples.Models
             Debug.WriteLine("Hello forest.");
             Grpc.Core.GrpcEnvironment.SetLogger(new DebugLogger());
         }
+
+        static void Main(string[] args)
+        {
+            if (args.Length < 1)
+            {
+                Console.WriteLine("Usage:\n 2-structured-data your-google-project-id");
+                return;
+            }
+            IBookStore bookStore = new DatastoreBookStore(args[0]);
+            BookList bookList = bookStore.List(10, null);
+            Console.WriteLine($"Books in {args[0]}:");
+            foreach (Book book in bookList.Books)
+            {
+                Console.WriteLine(book.Title);
+            }
+            return;
+        }
         
         /// <summary>
         /// Create a new datastore-backed bookstore.
