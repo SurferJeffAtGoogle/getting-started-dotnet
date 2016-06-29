@@ -16,7 +16,7 @@ using System.Web.Mvc;
 
 namespace GoogleCloudSamples
 {
-    class HandleGoogleAuthErrorAttribute : HandleErrorAttribute
+    internal class HandleGoogleAuthErrorAttribute : HandleErrorAttribute
     {
         public override void OnException(ExceptionContext filterContext)
         {
