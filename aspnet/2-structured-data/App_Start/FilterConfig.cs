@@ -16,11 +16,25 @@ using System.Web.Mvc;
 
 namespace GoogleCloudSamples
 {
+    class HandleGoogleAuthErrorAttribute : HandleErrorAttribute
+    {
+        public override void OnException(ExceptionContext filterContext)
+        {
+            // base.OnException(filterContext);
+            filterContext.Result = new ViewResult() { ViewName = "MissingAuth" };
+            filterContext.ExceptionHandled = true;
+        }
+    }
+
     public class FilterConfig
     {
         public static void RegisterGlobalFilters(GlobalFilterCollection filters)
         {
             filters.Add(new HandleErrorAttribute());
+            filters.Add(new HandleGoogleAuthErrorAttribute()
+            {
+                ExceptionType = typeof(Google.Apis.Auth.OAuth2.Responses.TokenResponseException)
+            });
         }
     }
 }
