@@ -16,4 +16,16 @@ Import-Module ..\..\BuildTools.psm1 -DisableNameChecking
 Set-BookStore datastore
 Build-Solution
 $env:GOOGLE_APPLICATION_CREDENTIALS = ''
-Run-IISExpressTest -TestJs testMissingCredentials.js
+$accountLine = (gcloud config list) -match '^account\s*='
+if ($accountLine) {
+    $account = $accountLine.split('=')[1]
+}
+
+try {
+    gcloud config set account '""'
+    Run-IISExpressTest -TestJs testMissingCredentials.js -LeaveRunning
+} finally {
+  if ($account) {
+    gcloud config set account $account
+  }
+}
