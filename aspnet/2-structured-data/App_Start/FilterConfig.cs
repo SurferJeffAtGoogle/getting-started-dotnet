@@ -20,10 +20,16 @@ namespace GoogleCloudSamples
     {
         public override void OnException(ExceptionContext filterContext)
         {
-            // Why, oh why doesn't base.OnException(filterContext) do this?
-            filterContext.Result = new ViewResult() { ViewName = "MissingAuth" };
-            filterContext.HttpContext.Response.StatusCode = 500;
-            filterContext.ExceptionHandled = true;
+            if (filterContext.Exception is Google.Apis.Auth.OAuth2.Responses.TokenResponseException)
+            {
+                filterContext.Result = new ViewResult() { ViewName = "MissingAuth" };
+                filterContext.HttpContext.Response.StatusCode = 500;
+                filterContext.ExceptionHandled = true;
+            }
+            else
+            {
+                base.OnException(filterContext);
+            }
         }
     }
 
@@ -31,11 +37,7 @@ namespace GoogleCloudSamples
     {
         public static void RegisterGlobalFilters(GlobalFilterCollection filters)
         {
-            filters.Add(new HandleErrorAttribute());
-            filters.Add(new HandleGoogleAuthErrorAttribute()
-            {
-                ExceptionType = typeof(Google.Apis.Auth.OAuth2.Responses.TokenResponseException)
-            });
+            filters.Add(new HandleGoogleAuthErrorAttribute());
         }
     }
 }
