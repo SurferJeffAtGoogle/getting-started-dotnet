@@ -20,8 +20,9 @@ namespace GoogleCloudSamples
     {
         public override void OnException(ExceptionContext filterContext)
         {
-            // base.OnException(filterContext);
+            // Why, oh why doesn't base.OnException(filterContext) do this?
             filterContext.Result = new ViewResult() { ViewName = "MissingAuth" };
+            filterContext.HttpContext.Response.StatusCode = 500;
             filterContext.ExceptionHandled = true;
         }
     }
