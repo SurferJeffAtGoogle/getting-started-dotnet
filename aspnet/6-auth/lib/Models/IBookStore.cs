@@ -32,6 +32,6 @@ namespace GoogleCloudSamples.Models
 
         void Delete(long id);
 
-        BookList List(int pageSize, string nextPageToken);
+        BookList List(int pageSize, string nextPageToken, string userId = null);
     }
 }

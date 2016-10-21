@@ -28,14 +28,14 @@ namespace GoogleCloudSamples.Controllers
         private const int _pageSize = 10;
 
         private readonly IBookStore _store;
-        private readonly BookDetailLookup _bookDetailLookup;
         private readonly ImageUploader _imageUploader;
 
-        public BooksController(IBookStore store, ImageUploader imageUploader, BookDetailLookup bookDetailLookup)
+        public User CurrentUser => new User(this.User);
+
+        public BooksController(IBookStore store, ImageUploader imageUploader)
         {
             _store = store;
             _imageUploader = imageUploader;
-            _bookDetailLookup = bookDetailLookup;
         }
 
         // GET: Books
@@ -46,6 +46,25 @@ namespace GoogleCloudSamples.Controllers
                 BookList = _store.List(_pageSize, nextPageToken)
             });
         }
+          
+        // GET: Books/Mine
+        // [START mine]
+        public ActionResult Mine(string nextPageToken)
+        {
+            if (Request.IsAuthenticated)
+            {
+                return View("Index", new ViewModels.Books.Index()
+                {
+                    // Fetch books created by the logged in user
+                    BookList = _store.List(_pageSize, nextPageToken, userId: CurrentUser.UserId)
+                });
+            }
+            else
+            {
+                return RedirectToAction("Index");
+            }
+        }
+        // [END mine]
 
         // GET: Books/Details/5
         public ActionResult Details(long? id)
@@ -74,11 +93,21 @@ namespace GoogleCloudSamples.Controllers
         // POST: Books/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        // [START create_book]
         public async Task<ActionResult> Create(Book book, HttpPostedFileBase image)
         {
             if (ModelState.IsValid)
             {
+                if (Request.IsAuthenticated)
+                {
+                    // Track the user who created this book
+                    book.CreatedById = CurrentUser.UserId;
+                }
+
                 _store.Create(book);
+
+                // ...
+                // [END create_book]
                 // If book cover image submitted, save image to Cloud Storage
                 if (image != null)
                 {
@@ -86,12 +115,10 @@ namespace GoogleCloudSamples.Controllers
                     book.ImageUrl = imageUrl;
                     _store.Update(book);
                 }
-                _bookDetailLookup.EnqueueBook(book.Id);
                 return RedirectToAction("Details", new { id = book.Id });
             }
             return ViewForm("Create", "Create", book);
         }
-
         // [END create]
 
         /// <summary>
@@ -131,15 +158,11 @@ namespace GoogleCloudSamples.Controllers
         // POST: Books/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit(Book book, long id, HttpPostedFileBase image)
+        public ActionResult Edit(Book book, long id)
         {
             if (ModelState.IsValid)
             {
                 book.Id = id;
-                if (image != null)
-                {
-                    book.ImageUrl = await _imageUploader.UploadImage(image, book.Id);
-                }
                 _store.Update(book);
                 return RedirectToAction("Details", new { id = book.Id });
             }

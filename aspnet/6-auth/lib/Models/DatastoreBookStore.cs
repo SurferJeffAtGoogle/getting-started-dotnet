@@ -102,9 +102,11 @@ namespace GoogleCloudSamples.Models
         }
 
         // [START list]
-        public BookList List(int pageSize, string nextPageToken)
+        public BookList List(int pageSize, string nextPageToken, string userId = null)
         {
             var query = new Query("Book") { Limit = pageSize };
+            if (userId != null)
+                query.Filter = Filter.Equal("CreatedById", userId);
             if (!string.IsNullOrWhiteSpace(nextPageToken))
                 query.StartCursor = ByteString.FromBase64(nextPageToken);
             var results = _db.RunQuery(query);

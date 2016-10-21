@@ -48,7 +48,7 @@ namespace GoogleCloudSamples
             throw new NotImplementedException();
         }
 
-        public BookList List(int pageSize, string nextPageToken)
+        public BookList List(int pageSize, string nextPageToken, string userId = null)
         {
             throw new NotImplementedException();
         }

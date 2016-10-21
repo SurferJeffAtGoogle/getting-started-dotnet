@@ -44,9 +44,14 @@ namespace GoogleCloudSamples.Models
         }
 
         // [START list]
-        public BookList List(int pageSize, string nextPageToken)
+        public BookList List(int pageSize, string nextPageToken, string userId = null)
         {
             IQueryable<Book> query = _dbcontext.Books.OrderBy(book => book.Id);
+            if (userId != null)
+            {
+                // Query for books created by the user
+                query = query.Where(book => book.CreatedById == userId);
+            }
             if (nextPageToken != null)
             {
                 long previousBookId = long.Parse(nextPageToken);
