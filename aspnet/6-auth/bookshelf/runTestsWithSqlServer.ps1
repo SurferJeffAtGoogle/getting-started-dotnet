@@ -16,8 +16,8 @@ Import-Module ..\..\..\BuildTools.psm1 -DisableNameChecking
 Set-BookStore sqlserver
 Remove-Item ..\lib\Migrations\* -Exclude Configuration.cs
 Copy-Item ..\lib\MigrationsSqlServer\* ..\lib\Migrations
-Build-Solution ..\5-pubsub.sln
+Build-Solution ..\6-auth.sln
 Set-Location ..\lib
 Migrate-Database lib.dll bin\Debug ..\..\..\bookshelf\Web.config
 Set-Location ..\bookshelf
-Run-IISExpressTest 5-pubsub-bookshelf
+Run-IISExpressTest 6-auth-bookshelf

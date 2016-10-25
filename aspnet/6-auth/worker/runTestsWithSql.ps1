@@ -14,5 +14,5 @@
 Import-Module ..\..\..\BuildTools.psm1 -DisableNameChecking
 
 Set-BookStore mysql
-Build-Solution ..\5-pubsub.sln
-Run-IISExpressTest 5-pubsub-worker
+Build-Solution ..\6-auth.sln
+Run-IISExpressTest 6-auth-worker
