@@ -12,6 +12,7 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
+using Google.Api.Gax;
 using Google.Apis.Services;
 using Google.Pubsub.V1;
 using GoogleCloudSamples.Models;
@@ -91,22 +92,20 @@ namespace GoogleCloudSamples.Services
                 _pub.CreateTopic(_topicPath);
                 _logger.LogVerbose("Created topic " + _topicPath);
             }
-            catch (Google.GoogleApiException e)
+            catch (Grpc.Core.RpcException e)
+            when (e.Status.StatusCode == Grpc.Core.StatusCode.AlreadyExists)
             {
-                // A 409 is ok.  It means the topic already exists.
-                if (e.Error.Code != 409)
-                    throw;
+                // The topic already exists.  Ok.
             }
             try
             {
-                _sub.CreateSubscription(_options.SubscriptionName, _topicPath, null, 0);
+                _sub.CreateSubscription(_subscriptionPath, _topicPath, null, 0);
                 _logger.LogVerbose("Created subscription " + _subscriptionPath);
             }
-            catch (Google.GoogleApiException e)
+            catch (Grpc.Core.RpcException e)
+            when (e.Status.StatusCode == Grpc.Core.StatusCode.AlreadyExists)
             {
-                // A 409 is ok.  It means the subscription already exists.
-                if (e.Error.Code != 409)
-                    throw;
+                // The subscription already exists.  Ok.
             }
         }
         // [END createtopicandsubscription]
@@ -151,7 +150,10 @@ namespace GoogleCloudSamples.Services
             _logger.LogVerbose("Pulling messages from subscription...");
             // Pull some messages from the subscription.
 
-            var response = _sub.Pull(_subscriptionPath, false, 3);
+            var response = _sub.Pull(_subscriptionPath, false, 3, new CallSettings()
+            {
+                Timing = CallTiming.FromExpiration(Expiration.FromTimeout(TimeSpan.FromSeconds(90)))
+            });
             if (response.ReceivedMessages == null)
             {
                 // HTTP Request expired because the queue was empty.  Ok.
