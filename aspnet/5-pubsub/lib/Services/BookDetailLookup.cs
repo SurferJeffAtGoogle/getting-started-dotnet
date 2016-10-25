@@ -12,9 +12,8 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
-using Google.Apis.Pubsub.v1;
-using Google.Apis.Pubsub.v1.Data;
-using Google.Apis.Services;
+using Google.Api.Gax;
+using Google.Pubsub.V1;
 using GoogleCloudSamples.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -35,7 +34,8 @@ namespace GoogleCloudSamples.Services
     /// </summary>
     public class BookDetailLookup
     {
-        private readonly PubsubService _pubsub;
+        private readonly PublisherClient _pub;
+        private readonly SubscriberClient _sub;
         private readonly string _topicPath;
         private readonly string _subscriptionPath;
         private readonly ISimpleLogger _logger;
@@ -54,26 +54,20 @@ namespace GoogleCloudSamples.Services
         {
             public string TopicName = "book-process-queue";
             public string SubscriptionName = "shared-worker-subscription";
+
         };
 
         public BookDetailLookup(string projectId, Options options = null, ISimpleLogger logger = null)
         {
             options = options ?? new Options();
+
             _logger = logger ?? new DebugLogger();
             // [START pubsubpaths]
             _topicPath = $"projects/{projectId}/topics/{options.TopicName}";
             _subscriptionPath = $"projects/{projectId}/subscriptions/{options.SubscriptionName}";
             // [END pubsubpaths]
-            var credentials = Google.Apis.Auth.OAuth2.GoogleCredential.GetApplicationDefaultAsync()
-                .Result;
-            if (credentials.IsCreateScopedRequired)
-            {
-                credentials = credentials.CreateScoped(new[] { PubsubService.Scope.Pubsub });
-            }
-            _pubsub = new PubsubService(new BaseClientService.Initializer()
-            {
-                HttpClientInitializer = credentials,
-            });
+            _pub = PublisherClient.Create();
+            _sub = SubscriberClient.Create();
         }
 
         // Using a sophisticated logger like log4net is beyond the scope of this sample.
@@ -93,30 +87,23 @@ namespace GoogleCloudSamples.Services
         {
             try
             {
-                _pubsub.Projects.Topics.Create(new Topic() { Name = _topicPath }, _topicPath)
-                    .Execute();
+                _pub.CreateTopic(_topicPath);
                 _logger.LogVerbose("Created topic " + _topicPath);
             }
-            catch (Google.GoogleApiException e)
+            catch (Grpc.Core.RpcException e)
+            when (e.Status.StatusCode == Grpc.Core.StatusCode.AlreadyExists)
             {
-                // A 409 is ok.  It means the topic already exists.
-                if (e.Error.Code != 409)
-                    throw;
+                // The topic already exists.  Ok.
             }
             try
             {
-                _pubsub.Projects.Subscriptions.Create(new Subscription()
-                {
-                    Name = _subscriptionPath,
-                    Topic = _topicPath
-                }, _subscriptionPath).Execute();
+                _sub.CreateSubscription(_subscriptionPath, _topicPath, null, 0);
                 _logger.LogVerbose("Created subscription " + _subscriptionPath);
             }
-            catch (Google.GoogleApiException e)
+            catch (Grpc.Core.RpcException e)
+            when (e.Status.StatusCode == Grpc.Core.StatusCode.AlreadyExists)
             {
-                // A 409 is ok.  It means the subscription already exists.
-                if (e.Error.Code != 409)
-                    throw;
+                // The subscription already exists.  Ok.
             }
         }
         // [END createtopicandsubscription]
@@ -160,11 +147,11 @@ namespace GoogleCloudSamples.Services
         {
             _logger.LogVerbose("Pulling messages from subscription...");
             // Pull some messages from the subscription.
-            var response = _pubsub.Projects.Subscriptions.Pull(new PullRequest()
+
+            var response = _sub.Pull(_subscriptionPath, false, 3, new CallSettings()
             {
-                MaxMessages = 3,
-                ReturnImmediately = false
-            }, _subscriptionPath).ExecuteAsync(cancellationToken).Result;
+                Timing = CallTiming.FromExpiration(Expiration.FromTimeout(TimeSpan.FromSeconds(90)))
+            });
             if (response.ReceivedMessages == null)
             {
                 // HTTP Request expired because the queue was empty.  Ok.
@@ -177,7 +164,7 @@ namespace GoogleCloudSamples.Services
                 try
                 {
                     // Unpack the message.
-                    byte[] json = Convert.FromBase64String(message.Message.Data);
+                    byte[] json = message.Message.Data.ToByteArray();
                     var qmessage = JsonConvert.DeserializeObject<QueueMessage>(
                         Encoding.UTF8.GetString(json));
                     // Invoke ProcessBook().
@@ -192,8 +179,7 @@ namespace GoogleCloudSamples.Services
             var ackIds = new string[response.ReceivedMessages.Count];
             for (int i = 0; i < response.ReceivedMessages.Count; ++i)
                 ackIds[i] = response.ReceivedMessages[i].AckId;
-            _pubsub.Projects.Subscriptions.Acknowledge(new AcknowledgeRequest() { AckIds = ackIds },
-                _subscriptionPath).Execute();
+            _sub.Acknowledge(_subscriptionPath, ackIds);
         }
         // [END pullonce]
 
@@ -204,13 +190,11 @@ namespace GoogleCloudSamples.Services
         public void EnqueueBook(long bookId)
         {
             var message = new QueueMessage() { BookId = bookId };
-            byte[] json = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
-            string base64 = Convert.ToBase64String(json);
-
-            _pubsub.Projects.Topics.Publish(new PublishRequest()
+            var json = JsonConvert.SerializeObject(message);
+            _pub.Publish(_topicPath, new[] { new PubsubMessage()
             {
-                Messages = new[] { new PubsubMessage() { Data = base64 } },
-            }, _topicPath).Execute();
+                Data = Google.Protobuf.ByteString.CopyFromUtf8(json)
+            } });
         }
         // [END enqueuebook]
 

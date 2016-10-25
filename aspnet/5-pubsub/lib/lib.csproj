@@ -74,16 +74,16 @@
       <HintPath>..\packages\Google.Apis.1.17.0\lib\net45\Google.Apis.PlatformServices.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Google.Apis.Pubsub.v1, Version=1.17.0.641, Culture=neutral, PublicKeyToken=4b01fa6e34db77ab, processorArchitecture=MSIL">
-      <HintPath>..\packages\Google.Apis.Pubsub.v1.1.17.0.641\lib\net45\Google.Apis.Pubsub.v1.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Google.Datastore.V1, Version=1.0.0.0, Culture=neutral, PublicKeyToken=185c282632e132a0, processorArchitecture=MSIL">
       <HintPath>..\packages\Google.Datastore.V1.1.0.0-beta02\lib\net45\Google.Datastore.V1.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Google.Protobuf, Version=3.1.0.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
       <HintPath>..\packages\Google.Protobuf.3.1.0\lib\net45\Google.Protobuf.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Google.Pubsub.V1, Version=1.0.0.0, Culture=neutral, PublicKeyToken=185c282632e132a0, processorArchitecture=MSIL">
+      <HintPath>..\packages\Google.Pubsub.V1.1.0.0-beta02\lib\net45\Google.Pubsub.V1.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Grpc.Auth, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d754f35622e28bad, processorArchitecture=MSIL">

@@ -13,7 +13,6 @@
 // the License.
 
 using Google.Api.Gax;
-using Google.Apis.Services;
 using Google.Pubsub.V1;
 using GoogleCloudSamples.Models;
 using Newtonsoft.Json;
@@ -40,7 +39,6 @@ namespace GoogleCloudSamples.Services
         private readonly string _topicPath;
         private readonly string _subscriptionPath;
         private readonly ISimpleLogger _logger;
-        private readonly Options _options;
 
         /// <summary>
         /// We json-encode this message and publish it to the topic.
@@ -61,12 +59,12 @@ namespace GoogleCloudSamples.Services
 
         public BookDetailLookup(string projectId, Options options = null, ISimpleLogger logger = null)
         {
-            _options = options ?? new Options();
+            options = options ?? new Options();
 
             _logger = logger ?? new DebugLogger();
             // [START pubsubpaths]
-            _topicPath = $"projects/{projectId}/topics/{_options.TopicName}";
-            _subscriptionPath = $"projects/{projectId}/subscriptions/{_options.SubscriptionName}";
+            _topicPath = $"projects/{projectId}/topics/{options.TopicName}";
+            _subscriptionPath = $"projects/{projectId}/subscriptions/{options.SubscriptionName}";
             // [END pubsubpaths]
             _pub = PublisherClient.Create();
             _sub = SubscriberClient.Create();
