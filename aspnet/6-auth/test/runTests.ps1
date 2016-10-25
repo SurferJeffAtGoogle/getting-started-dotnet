@@ -13,5 +13,5 @@
 # the License.
 Import-Module ..\..\..\BuildTools.psm1 -DisableNameChecking
 
-Build-Solution ..\5-pubsub.sln
+Build-Solution ..\6-auth.sln
 ..\packages\xunit.runner.console.2.1.0\tools\xunit.console.exe .\bin\Debug\test.dll
