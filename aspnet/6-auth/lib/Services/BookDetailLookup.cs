@@ -54,7 +54,6 @@ namespace GoogleCloudSamples.Services
         {
             public string TopicName = "book-process-queue";
             public string SubscriptionName = "shared-worker-subscription";
-            
         };
 
         public BookDetailLookup(string projectId, Options options = null, ISimpleLogger logger = null)
