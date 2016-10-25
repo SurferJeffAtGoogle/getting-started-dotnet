@@ -29,13 +29,16 @@ namespace GoogleCloudSamples.Controllers
 
         private readonly IBookStore _store;
         private readonly ImageUploader _imageUploader;
+        private readonly BookDetailLookup _bookDetailLookup;
 
         public User CurrentUser => new User(this.User);
 
-        public BooksController(IBookStore store, ImageUploader imageUploader)
+        public BooksController(IBookStore store, ImageUploader imageUploader,
+            BookDetailLookup bookDetailLookup)
         {
             _store = store;
             _imageUploader = imageUploader;
+            _bookDetailLookup = bookDetailLookup;
         }
 
         // GET: Books
@@ -115,6 +118,7 @@ namespace GoogleCloudSamples.Controllers
                     book.ImageUrl = imageUrl;
                     _store.Update(book);
                 }
+                _bookDetailLookup.EnqueueBook(book.Id);
                 return RedirectToAction("Details", new { id = book.Id });
             }
             return ViewForm("Create", "Create", book);

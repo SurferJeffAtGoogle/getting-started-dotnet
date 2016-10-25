@@ -13,6 +13,8 @@
 // the License.
 
 using Google.Storage.V1;
+using System.Security.Claims;
+using System.Web.Helpers;
 using System.Web.Mvc;
 using System.Web.Routing;
 
@@ -24,8 +26,8 @@ namespace GoogleCloudSamples
         {
             // This helps Google determine how many developers have been through
             // this Getting Started guide. Regular applications do not need to set this.
-            StorageClientImpl.ApplicationName = "Bookshelf.NET-Step5";
-
+            StorageClientImpl.ApplicationName = "Bookshelf.NET-Step6";
+            AntiForgeryConfig.UniqueClaimTypeIdentifier = ClaimTypes.NameIdentifier;
             AreaRegistration.RegisterAllAreas();
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
