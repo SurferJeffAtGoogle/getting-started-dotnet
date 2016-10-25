@@ -49,7 +49,7 @@ namespace GoogleCloudSamples.Controllers
                 BookList = _store.List(_pageSize, nextPageToken)
             });
         }
-          
+
         // GET: Books/Mine
         // [START mine]
         public ActionResult Mine(string nextPageToken)
