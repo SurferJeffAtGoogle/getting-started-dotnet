@@ -619,17 +619,26 @@ filter Update-Packages ([string] $Mask) {
     foreach ($solution in $solutions) {
         # Nuget refuses to update without calling restore first.
         nuget restore $solution
-        # Assume all packages.configs in the same directory, or a subdirectory
+        # Assume all .csprojs live in the same directory, or a subdirectory
         # as the solution are for projects in the solution.
-        $packageConfigs = Find-Files (Get-Item $solution).Directory -Masks packages.config
-        foreach ($packageConfig in $packageConfigs) {
+        $projectFiles = Find-Files (Get-Item $solution).Directory -Masks *.csproj
+        $ns = @{msbuild = "http://schemas.microsoft.com/developer/msbuild/2003"}
+        foreach ($projectFile in $projectFiles) {
+            # Find the Include path to packages.config.
+            $packageConfig = foreach ($elementType in 'None', 'Content') {
+                (Select-Xml -Namespace $ns -Path $projectFile `
+                    -XPath "/msbuild:Project/msbuild:ItemGroup/msbuild:$elementType"
+                    ).Node.Include | Where {$_ -like "*packages.config"}
+            }
+            # Convert the path from relative to the .csproj to absolute.
+            $packageConfig = Join-Path (Split-Path -Parent $projectFile) $packageConfig
             # Inspect each packages.config and find matching Ids.
             $packageIds = (Select-Xml -Path $packageConfig -XPath packages/package).Node.Id `
                 | Where {$_ -like $Mask}
             # Calling nuget update with no packageIds means update *all* packages,
             # and that's definitely not what we want.
             if ($packageIds) {
-                nuget update -Prerelease $packageConfig ($packageIds | ForEach-Object {'-Id', $_})
+                nuget update -Prerelease $projectFile ($packageIds | ForEach-Object {'-Id', $_})
             }
         }
     }
