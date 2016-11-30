@@ -622,14 +622,15 @@ filter Update-Packages ([string] $Mask) {
         # Assume all packages.configs in the same directory, or a subdirectory
         # as the solution are for projects in the solution.
         $packageConfigs = Find-Files (Get-Item $solution).Directory -Masks packages.config
-        # Inspect each packages.config and find matching Ids.
-        $packageIds = $packageConfigs `
-            | ForEach-Object {(Select-Xml -Path $_ -XPath packages/package).Node.Id} `
-            | Where {$_ -like $Mask}
-        # Calling nuget update with no packageIds means update *all* packages,
-        # and that's definitely not what we want.
-        if ($packageIds) {
-            nuget update -Prerelease $solution ($packageIds | ForEach-Object {"-Id", $_})
+        foreach ($packageConfig in $packageConfigs) {
+            # Inspect each packages.config and find matching Ids.
+            $packageIds = (Select-Xml -Path $packageConfig -XPath packages/package).Node.Id `
+                | Where {$_ -like $Mask}
+            # Calling nuget update with no packageIds means update *all* packages,
+            # and that's definitely not what we want.
+            if ($packageIds) {
+                nuget update -Prerelease $packageConfig ($packageIds | ForEach-Object {'-Id', $_})
+            }
         }
     }
 }
