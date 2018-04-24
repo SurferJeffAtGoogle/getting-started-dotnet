@@ -539,7 +539,14 @@ function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '',
         $try = 0
         while ($true) {
             Start-Sleep -Seconds 4  # Wait for web process to start up.
-            casperjs $TestJs http://localhost:$port
+            $env:CASPERJS11_URL = "http://localhost:$port"
+            casperjs test --xunit=sponge_log.xml $TestJs 
+            # Casper 1.1 always returns 0, so inspect the xml output
+            # to see if a test failed.
+            [xml]$x = Get-Content sponge_log.xml         
+            foreach ($suite in $x.testsuites.testsuite) {
+                $LASTEXITCODE += [int] $suite.failures 
+            }
             if (0 -eq $LASTEXITCODE) {
                 break;
             }
