@@ -43,8 +43,8 @@ Unzip $env:KOKORO_GFILE_DIR\phantomjs-2.1.1-windows.zip \
 $env:PATH = "$env:PATH;$(Resolve-Path \phantomjs-2.1.1-windows)\bin"
 
 # Install casperjs
-Unzip $env:KOKORO_GFILE_DIR\casperjs-casperjs-1.1.0-0-gaf0955c.zip \
-$casperJsInstallPath = Resolve-Path \casperjs-casperjs-b5c59e1
+Unzip $env:KOKORO_GFILE_DIR\casperjs-1.1.4-1.zip \
+$casperJsInstallPath = Resolve-Path \casperjs-1.1.4-1
 $env:PATH = "$env:PATH;$casperJsInstallPath\bin"
 
 # Install nuget command line.

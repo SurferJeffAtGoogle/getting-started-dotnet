@@ -15,14 +15,9 @@
 var system = require('system');
 var host = system.env['CASPERJS11_URL'];
 
-casper.test.begin('Hello World home page returns 200.', 6, function suite(test) {
-    casper.start(host + '/', function (response) {
-        console.log('Starting ' + host + '/');
-        this.test.assertEquals(response.status, 302);
-    });
-
-    casper.thenOpen(host + '/Books', function (response) {
-        this.test.assertEquals(response.status, 200);
+casper.test.begin('Stuff', 5, function suite(test) {
+    casper.start(host + '/Books', function (response) {
+        test.assertEquals(response.status, 200);
     });
 
     casper.thenClick('#add-book', function () {
@@ -38,22 +33,22 @@ casper.test.begin('Hello World home page returns 200.', 6, function suite(test) 
 
     casper.thenClick('button', function () {
         console.log('Submitted.  New location is ' + this.getCurrentUrl());
-        this.test.assertEquals(this.fetchText('.book-description'),
+        test.assertEquals(this.fetchText('.book-description'),
             'Automatically added by test.js');
     });
 
     casper.thenClick('button', function (response) {
         console.log('Deleted new book.  New location is ' + this.getCurrentUrl());
-        this.test.assertEquals(response.status, 200);
+        test.assertEquals(response.status, 200);
     });
 
     casper.thenOpen(host + '/Home/Throw', function (response) {
-        this.test.assertEquals(response.status, 500);
-        this.test.assertEquals(this.fetchText('#message'),
+        test.assertEquals(response.status, 500);
+        test.assertEquals(this.fetchText('#message'),
             'For testing purposes only.');
     });
 
     casper.run(function () {
-        this.test.done();
+        test.done();
     });
 });
