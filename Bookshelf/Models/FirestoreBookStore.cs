@@ -45,10 +45,16 @@ namespace Bookshelf.Models
             return _books.Document(id).DeleteAsync();
         }
 
+        class SortKey {
+            string Field;
+            string SortId;
+        }
+
         public async Task<BookList> ListAsync(int pageSize, string previousBookId)
         {
+            
             List<Book> bookList = new List<Book>();
-            var query = _books.OrderBy("Title");
+            var query = _books.OrderBy("Title").OrderBy("SortId");
             if (!string.IsNullOrEmpty(previousBookId))
             {
                 DocumentSnapshot prevDocSnapshot = await

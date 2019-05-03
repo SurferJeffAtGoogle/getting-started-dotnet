@@ -46,6 +46,9 @@ namespace Bookshelf.Models
         [DataType(DataType.MultilineText)]
         [FirestoreProperty]
         public string Description { get; set; }
+
+        [FirestoreProperty]
+        public string SortId { get; set; } = Guid.NewGuid().ToString();
     }
     // [END book]
 }
