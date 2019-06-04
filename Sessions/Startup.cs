@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
@@ -35,14 +37,17 @@ namespace Sessions
                 // grained access control.
                 .ProtectKeysWithGoogleKms(
                     Configuration["DataProtection:KmsKeyName"]);
-                    
+            services.AddDistributedRedisCache(options => {
+                options.InstanceName = Configuration["Redis:InstanceName"];
+                options.Configuration = Configuration["Redis:Configuration"];
+            });
+            
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-            services.AddDistributedMemoryCache();
             services.AddSession();
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
@@ -74,5 +79,26 @@ namespace Sessions
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
         }
+
+        public static string GetProjectId()
+        {
+            try
+            {
+                // Query the metadata server.
+                HttpClient http = new HttpClient();
+                http.DefaultRequestHeaders.Add("Metadata-Flavor", "Google");
+                http.BaseAddress = new Uri(
+                    @"http://metadata.google.internal/computeMetadata/v1/project/");
+                return http.GetStringAsync("project-id").Result;
+            }
+            catch (AggregateException e)
+            when (e.InnerException is HttpRequestException)
+            {
+                throw new Exception("This application can only be run in " +
+                    "Google Cloud.  Deploy it to Google Cloud.",
+                    e.InnerException);
+            }
+        }
+
     }
 }
