@@ -50,9 +50,9 @@ while ($true) {
     gcloud redis instances create --region $region session-store
 }
 
+# Save settings to appsettings.json
 $appsettings = Get-Content -Raw appsettings.json | ConvertFrom-Json
 $appsettings.DataProtection.KmsKeyName = $keyName
 $appsettings.DataProtection.Bucket = $bucketName
 $appsettings.Redis.Configuration = $cache.host
-ConvertTo-Json $appsettings | Out-File -Encoding utf8 -FilePath appsettings.json 
-
+ConvertTo-Json $appsettings | Out-File -Encoding utf8 -FilePath appsettings.json
