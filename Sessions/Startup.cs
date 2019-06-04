@@ -37,7 +37,8 @@ namespace Sessions
                 // grained access control.
                 .ProtectKeysWithGoogleKms(
                     Configuration["DataProtection:KmsKeyName"]);
-            services.AddDistributedRedisCache(options => {
+            Microsoft.Extensions.DependencyInjection.RedisCacheServiceCollectionExtentions x;
+            services.AddStackExchangeRedisCache(options => {
                 options.InstanceName = Configuration["Redis:InstanceName"];
                 options.Configuration = Configuration["Redis:Configuration"];
             });
