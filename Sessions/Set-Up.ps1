@@ -42,9 +42,9 @@ while ($true) {
     $redisCaches = gcloud redis instances list --region $region --format json | ConvertFrom-Json
     if ($redisCaches) 
     {
-        $cache = $caches[0]
+        $cache = $redisCaches[0]
         $name = $cache.name
-        WriteHost "Using redis cache $name."
+        Write-Host "Using redis cache $name."
         break
     }
     gcloud redis instances create --region $region session-store
