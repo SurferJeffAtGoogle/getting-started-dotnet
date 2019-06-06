@@ -14,12 +14,15 @@
 
 
 $projectId = gcloud config get-value project
+$projectNumber = gcloud projects describe $projectId --format="get(projectNumber)"
+$serviceAccount = "$projectNumber-compute@developer.gserviceaccount.com"
 $keyRingId = "sessions-app"
 $keyId = "data-protection-key"
 $bucketName = "$projectId-bucket"
 $region = "us-central1"
 
 # Check to see if the key ring already exists.
+$keyRingName = "projects/$projectId/locations/global/keyRings/$keyRingId" 
 $matchingKeyRing = (gcloud kms keyrings list --format json --location global `
     --filter="projects/$projectId/locations/global/keyRings/$keyRingId" | ConvertFrom-Json).name
 if ($matchingKeyRing) {
@@ -31,7 +34,7 @@ if ($matchingKeyRing) {
 }
 
 # Check to see if the key already exists
-$keyName = "projects/$projectId/locations/global/keyRings/$keyRingId/cryptoKeys/$keyId"
+$keyName = "$keyRingName/cryptoKeys/$keyId"
 $matchingKey = (gcloud kms keys list --format json --location global `
     --keyring $keyRingId --filter="$keyName" | ConvertFrom-Json).name
 if ($matchingKey) {
@@ -40,6 +43,15 @@ if ($matchingKey) {
     # Create the new key.
     Write-Host "Creating new key $keyId..."
     gcloud kms keys create $keyId --location global --keyring $keyRingId --purpose=encryption
+}
+
+# Give the cloud run service account permission encrypt and decrypt with the
+# key ring.
+foreach ($role in "roles/cloudkms.cryptoKeyDecrypter", 
+    "roles/cloudkms.cryptoKeyEncrypter") {
+    Write-Host "Adding role $role to $serviceAccount for $keyRingName."
+    gcloud kms keyrings add-iam-policy-binding $keyRingName `
+        --member serviceAccount:$serviceAccount --role $role | Write-Host    
 }
 
 # Check to see if the bucket already exists.
