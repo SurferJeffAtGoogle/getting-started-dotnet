@@ -12,33 +12,36 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+Param([string]$ComputeEngineInstanceIpAddress, [string]$ComputeEngineInstanceUserName)
+
 $pubxmlPath = (Get-Item 'Properties\PublishProfiles\ComputeEngine.pubxml').FullName
 $pubxml = [xml] (Get-Content $pubxmlPath)
 
 # Retrieve the Compute Engine instance's IP address.
-$ip = $pubxml.Project.PropertyGroup.MSDeployServiceURL
-if ([String]::IsNullOrWhiteSpace($ip))
-{
+$ip = if ($ComputeEngineInstanceIpAddress) { 
+    $ComputeEngineInstanceIpAddress
+} else { 
+    $pubxml.Project.PropertyGroup.MSDeployServiceURL 
+}
+if ([String]::IsNullOrWhiteSpace($ip)) {
     $ip = Read-Host -Prompt "Enter your Compute Engine instance's public IP address"
-    $pubxml.Project.PropertyGroup.MSDeployServiceURL = "$ip"        
-    $pubxml.Project.PropertyGroup.SiteUrlToLaunchAfterPublish = "http://$ip/"
-    $writeXml = $true
 }
 
 # Retrieve the username.
-$username = $pubxml.Project.PropertyGroup.UserName
-if ([String]::IsNullOrWhiteSpace($username))
-{
+$username = if ($ComputeEngineInstanceUserName) { 
+    $ComputeEngineInstanceUserName 
+} else { 
+    $pubxml.Project.PropertyGroup.UserName 
+}
+if ([String]::IsNullOrWhiteSpace($username)) {
     $username = Read-Host -Prompt "Enter username for $ip"
-    $pubxml.Project.PropertyGroup.UserName = "$username"
-    $writeXml = $true
 }
 
 # Save the username and ip address.
-if ($writeXml)
-{
-    $pubxml.Save($pubxmlPath)
-}
+$pubxml.Project.PropertyGroup.MSDeployServiceURL = "$ip"        
+$pubxml.Project.PropertyGroup.SiteUrlToLaunchAfterPublish = "http://$ip/"
+$pubxml.Project.PropertyGroup.UserName = "$username"
+$pubxml.Save($pubxmlPath)
 
 # Ask for the password.
 $securePassword = Read-Host -Prompt "Enter password for ${ip}\$username" -AsSecureString
