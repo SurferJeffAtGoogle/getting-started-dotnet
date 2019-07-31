@@ -15,22 +15,23 @@
 # Collect some details about the project that we'll need later.
 $gceIpAddress = "104.197.30.64"
 
-$pubxmlPath = 'Properties\PublishProfiles\ComputeEngine.pubxml'
+$pubxmlPath = (Get-Item 'Properties\PublishProfiles\ComputeEngine.pubxml').FullName
 $pubxml = [xml] (Get-Content $pubxmlPath)
 
-if ([String]::IsNullOrWhiteSpace($pubxml.Project.PropertyGroup.MSDeployServiceURL))
+$ip = $pubxml.Project.PropertyGroup.MSDeployServiceURL
+if ([String]::IsNullOrWhiteSpace($ip))
 {
-    $pubxml.Project.PropertyGroup.MSDeployServiceURL = `
-        Read-Host -Prompt "Enter your Compute Engine instance's public IP address"
-    $pubxml.Project.PropertyGroup.SiteUrlToLaunchAfterPublish = `
-        "http://${$pubxml.Project.PropertyGroup.MSDeployServiceURL}/"
+    $ip = Read-Host -Prompt "Enter your Compute Engine instance's public IP address"
+    $pubxml.Project.PropertyGroup.MSDeployServiceURL = "$ip"        
+    $pubxml.Project.PropertyGroup.SiteUrlToLaunchAfterPublish = "http://$ip/"
     $writeXml = $true
 }
 
-if ([String]::IsNullOrWhiteSpace($pubxml.Project.PropertyGroup.UserName))
+$username = $pubxml.Project.PropertyGroup.UserName
+if ([String]::IsNullOrWhiteSpace($username))
 {
-    $pubxml.Project.PropertyGroup.UserName = `
-        Read-Host -Prompt "Enter username for ${$pubxml.Project.PropertyGroup.MSDeployServiceURL}"
+    $username = Read-Host -Prompt "Enter username for $ip"
+    $pubxml.Project.PropertyGroup.UserName = "$username"
     $writeXml = $true
 }
 
@@ -39,7 +40,7 @@ if ($writeXml)
     $pubxml.Save($pubxmlPath)
 }
 
-$password = Read-Host -Prompt "Enter password for ${$pubxml.Project.PropertyGroup.MSDeployServiceURL}\${$pubxml.Project.PropertyGroup.UserName}" -AsSecureString | ConvertFrom-SecureString
-
+$password = Read-Host -Prompt "Enter password for ${ip}\$username" -AsSecureString | ConvertFrom-SecureString
+$password
 # Build the application locally.
 dotnet publish -c Release /p:PublishProfile=Properties\PublishProfiles\ComputeEngine.pubxml /p:Password=$password
