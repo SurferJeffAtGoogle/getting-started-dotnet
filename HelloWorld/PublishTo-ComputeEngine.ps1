@@ -12,12 +12,10 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Collect some details about the project that we'll need later.
-$gceIpAddress = "104.197.30.64"
-
 $pubxmlPath = (Get-Item 'Properties\PublishProfiles\ComputeEngine.pubxml').FullName
 $pubxml = [xml] (Get-Content $pubxmlPath)
 
+# Retrieve the Compute Engine instance's IP address.
 $ip = $pubxml.Project.PropertyGroup.MSDeployServiceURL
 if ([String]::IsNullOrWhiteSpace($ip))
 {
@@ -27,6 +25,7 @@ if ([String]::IsNullOrWhiteSpace($ip))
     $writeXml = $true
 }
 
+# Retrieve the username.
 $username = $pubxml.Project.PropertyGroup.UserName
 if ([String]::IsNullOrWhiteSpace($username))
 {
@@ -35,12 +34,16 @@ if ([String]::IsNullOrWhiteSpace($username))
     $writeXml = $true
 }
 
+# Save the username and ip address.
 if ($writeXml)
 {
     $pubxml.Save($pubxmlPath)
 }
 
-$password = Read-Host -Prompt "Enter password for ${ip}\$username" -AsSecureString | ConvertFrom-SecureString
-$password
-# Build the application locally.
+# Ask for the password.
+$securePassword = Read-Host -Prompt "Enter password for ${ip}\$username" -AsSecureString
+$credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "$username", $securePassword
+$password = $credential.GetNetworkCredential().password
+
+# Publish it!
 dotnet publish -c Release /p:PublishProfile=Properties\PublishProfiles\ComputeEngine.pubxml /p:Password=$password
