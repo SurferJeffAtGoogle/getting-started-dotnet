@@ -16,13 +16,4 @@
 $gceIpAddress = "104.197.30.64"
 
 # Build the application locally.
-dotnet publish -c Release
-
-$binPath = (Get-Item .\bin\Release\netcoreapp2.2\publish).FullName
-$computerName = $gceIpAddress # "https://$gceIpAddress/msdeploy.axd?site=Default%20Web%20Site"
-$userName = Read-Host -Prompt "Enter user name for ${gceIpAddress}"
-$password = Read-Host -Prompt "Enter password for ${gceIpAddress}\${userName}" -AsSecureString | ConvertFrom-SecureString
-msdeploy -verb:sync -source:contentPath=`"$binPath`" `
-    -dest:auto,ComputerName=`"$computerName`",UserName=`"$userName`",Password=`"$password`",AuthType=Basic
-
-
+dotnet publish -c Release /p:PublishProfile=Properties\PublishProfiles\CustomProfile.pubxml /p:Password='your-password'
