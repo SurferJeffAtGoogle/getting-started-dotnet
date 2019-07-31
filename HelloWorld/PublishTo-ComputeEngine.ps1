@@ -12,6 +12,25 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+<#
+.SYNOPSIS
+Deploys HelloWorld to an IIS instance running on Google Compute Engine.
+
+.PARAMETER ComputeEngineInstanceIpAddress
+The public IP address of your compute engine instance.  Optional.
+
+.PARAMETER ComputeEngineInstanceUserName
+The username to use when authenticating with your compute engine instance.  Optional.
+
+.EXAMPLE
+.\PublishTo-ComputeEngine.ps1
+Enter your Compute Engine instance's public IP address: 1.2.3.4
+Enter username for 1.2.3.4: admin
+Enter password for 1.2.3.4\admin: *******
+
+#>
+
+
 Param([string]$ComputeEngineInstanceIpAddress, [string]$ComputeEngineInstanceUserName)
 
 $pubxmlPath = (Get-Item 'Properties\PublishProfiles\ComputeEngine.pubxml').FullName
@@ -49,4 +68,4 @@ $credential = New-Object -TypeName System.Management.Automation.PSCredential -Ar
 $password = $credential.GetNetworkCredential().password
 
 # Publish it!
-dotnet publish -c Release /p:PublishProfile=Properties\PublishProfiles\ComputeEngine.pubxml /p:Password=$password
+dotnet publish -c Release /p:PublishProfile=Properties\PublishProfiles\ComputeEngine.pubxml "/p:Password=$password"
