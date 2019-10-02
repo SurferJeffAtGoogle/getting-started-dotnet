@@ -20,7 +20,6 @@ Cleans up all resources created by other scripts.
 $sourceInstance = gcloud compute instances list --filter='name:aspnet-*' `
     --sort-by ~NAME --limit 1 --format json | convertfrom-json
 
-
 gcloud -q compute forwarding-rules delete aspnet-http-rule --global
 gcloud -q compute target-http-proxies delete aspnet-proxy
 gcloud -q compute url-maps delete aspnet-map
@@ -29,7 +28,5 @@ gcloud -q compute backend-services delete aspnet-service --global
 gcloud -q compute http-health-checks delete root-health-check
 gcloud -q compute instance-groups managed delete aspnet-group `
   --zone $sourceInstance.zone
-gcloud -q compute firewall-rules delete allow-https-aspnet
-gcloud -q compute firewall-rules delete allow-http-aspnet 
 gcloud -q compute instance-templates delete aspnet-group-tmpl
 gcloud -q compute images delete aspnet-group-image

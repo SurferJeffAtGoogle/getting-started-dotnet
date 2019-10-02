@@ -30,26 +30,16 @@ gcloud compute images create aspnet-group-image `
   --force
 
 # Create an instance template based on the aspnet instance already running.
-$scopes = $sourceInstance.serviceAccounts.scopes -join ','
-$machineType = $sourceInstance.machineType.split('/')[-1]
-$aspnetAccount = $sourceInstance.serviceAccounts.email
 
 gcloud compute instance-templates create aspnet-group-tmpl `
     --no-address `
     --boot-disk-auto-delete `
-    --create-disk image=aspnet-group-image,auto-delete=yes `
-    --tags aspnet-http,aspnet-https `
-    --machine-type $machineType `
-    --service-account $aspnetAccount `
-    --scopes $scopes
+    --image aspnet-group-image `
+    --tags "aspnet-group,$($sourceInstance.tags.items -join ',')" `
+    --machine-type "$($sourceInstance.machineType.split('/')[-1])" `
+    --service-account "$($sourceInstance.serviceAccounts.email)" `
+    --scopes "$($sourceInstance.serviceAccounts.scopes -join ',')"
 # [END getting_started_create_template]
-
-
-gcloud compute firewall-rules create allow-http-aspnet `
-    --allow tcp:80 `
-    --source-ranges 0.0.0.0/0 `
-    --target-tags aspnet-http `
-    --description "Allow port 80 access to aspnet instances."
 
 # [START getting_started_create_group]
 # Create an instance group.
