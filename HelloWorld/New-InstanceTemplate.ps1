@@ -19,9 +19,26 @@ Creates a compute engine instance template from aspnet-*.
 
 # Find the aspnet instance already running.
 $sourceInstance = gcloud compute instances list --filter='name:aspnet-*' `
-    --sort-by ~NAME --limit 1 --format json | convertfrom-json 
+    --sort-by ~NAME --limit 1 --format json | convertfrom-json
+
+# Create a new disk image based on the running aspnet server.
+gcloud compute images create aspnet-group-image `
+  --source-disk $sourceInstance.disks.source `
+  --force
 
 # Create an instance template based on the aspnet instance already running.
+$scopes = $sourceInstance.serviceAccounts.scopes -join ','
+$machineType = $sourceInstance.machineType.split('/')[-1]
+$serviceAccount = $sourceInstance.serviceAccounts.email
+
 gcloud compute instance-templates create aspnet-group-tmpl `
-    --source-instance $sourceInstance.name `
-    --source-instance-zone $sourceInstance.zone
+    --no-address `
+    --boot-disk-auto-delete `
+    --create-disk=image=aspnet-group-image,auto-delete=yes `
+    --labels=aspnet=1 `
+    --machine-type=$machineType `
+    --service-account=$serviceAccount `
+    --scopes=$scopes
+
+
+
